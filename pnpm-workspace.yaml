@@ -1,0 +1,9 @@
+packages:
+  - frontend
+  - backend
+
+# Lets frontend's "@ilocate/backend": "*" resolve to the local backend/ folder
+linkWorkspacePackages: true
+
+allowBuilds:
+  protobufjs: false
