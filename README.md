@@ -98,12 +98,14 @@ frontend/                 Next.js app (UI only)
   components/
     map-leaflet.tsx       Leaflet map (routes, landmarks, directions, pin drop)
     home/                 Landing page sections
-    ui/                   shadcn/ui components
+    ui/                   shadcn/ui primitives in use (accordion, avatar, button, dialog, dropdown-menu)
   hooks/                  Shared React hooks
   lib/
+    likes.ts              Liked places (localStorage, synced across pages)
+    places.ts             Shared place helpers (images, ratings, slugs)
     preferences.ts        Browser-local interest persistence
     utils.ts              cn() class-name helper
-  public/images/          Place, food, and event photos
+  public/images/          Place and food photos
 
 backend/                  Data + services (@ilocate/backend)
   src/
