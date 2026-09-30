@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import dynamic from "next/dynamic"
-import { BookmarkCheck, CalendarDays, ChevronRight, Languages, Map, Maximize2, Search } from "lucide-react"
+import { BookmarkCheck, ChevronRight, CircleHelp, Languages, Map, Maximize2, Search } from "lucide-react"
 import { landmarks } from "@ilocate/backend/landmarks"
 import { loadAndDecodeRoutes, type DecodedRoute } from "@ilocate/backend/routes"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
@@ -23,9 +23,9 @@ const MAP_ZOOM = 13
 
 const quickActions = [
   { href: "/dashboard/map", label: "Routes", icon: Map, tint: "bg-primary/10 text-primary" },
-  { href: "/dashboard/itinerary", label: "Itinerary", icon: CalendarDays, tint: "bg-amber-100 text-amber-700" },
   { href: "/dashboard/translator", label: "Translate", icon: Languages, tint: "bg-sky-100 text-sky-700" },
   { href: "/dashboard/saved-routes", label: "Saved", icon: BookmarkCheck, tint: "bg-rose-100 text-rose-700" },
+  { href: "/dashboard/help", label: "Help", icon: CircleHelp, tint: "bg-amber-100 text-amber-700" },
 ]
 
 const exploreCategories = [

@@ -39,7 +39,7 @@ No Firebase project or environment variables are required. Likes and interests a
 npm run dev
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. On first launch you'll see a short welcome screen to pick your interests; after that the app opens straight to Home.
 
 ### Other commands (run from the repo root)
 
@@ -89,21 +89,21 @@ package.json              Workspace root: `npm run dev/build/start/typecheck` fr
 frontend/                 Next.js app (UI only)
   app/
     layout.tsx            Root layout (fonts, Vercel Analytics)
-    (site)/               Public pages: landing (features, how it works, FAQs, CTA), FAQs
-    (auth)/               Interest selection
+    page.tsx              Launch screen: sends first-time users to the welcome screen, others to Home
+    (onboarding)/         First-launch welcome + interest selection (/preferences)
     login/page.tsx        Legacy login URL redirects to /dashboard
     signup/page.tsx       Legacy signup URL redirects to /dashboard
     (dashboard)/           Guest-accessible explorer and tools
-      dashboard/          Home, map, places, food, itinerary, translator, saved routes, profile
+      dashboard/          Home, map, places, food, translator, saved routes, help & FAQs, profile
   components/
     map-leaflet.tsx       Leaflet map (routes, landmarks, directions, pin drop)
-    home/                 Landing page sections
+    faq-list.tsx          FAQ accordion (Help & FAQs page)
     ui/                   shadcn/ui primitives in use (accordion, avatar, button, dialog, dropdown-menu)
   hooks/                  Shared React hooks
   lib/
     likes.ts              Liked places (localStorage, synced across pages)
     places.ts             Shared place helpers (images, ratings, slugs)
-    preferences.ts        Browser-local interest persistence
+    preferences.ts        Browser-local interests + first-launch (onboarding) flag
     utils.ts              cn() class-name helper
   public/images/          Place and food photos
 

@@ -19,3 +19,26 @@ export function saveUserPreferences(preferences: string[]): void {
     // Keep the app usable when browser storage is unavailable.
   }
 }
+const ONBOARDED_STORAGE_KEY = "ilocate-onboarded"
+
+// First launch shows the welcome/interests screen; after that the app opens straight to Home
+export function hasCompletedOnboarding(): boolean {
+  if (typeof window === "undefined") return false
+
+  try {
+    return (
+      window.localStorage.getItem(ONBOARDED_STORAGE_KEY) === "1" ||
+      window.localStorage.getItem(PREFERENCES_STORAGE_KEY) !== null
+    )
+  } catch {
+    return true
+  }
+}
+
+export function markOnboardingComplete(): void {
+  try {
+    window.localStorage.setItem(ONBOARDED_STORAGE_KEY, "1")
+  } catch {
+    // Keep the app usable when browser storage is unavailable.
+  }
+}
