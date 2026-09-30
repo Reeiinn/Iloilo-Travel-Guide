@@ -4,10 +4,10 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   BookmarkCheck,
-  CalendarDays,
   Check,
   ChevronRight,
   Church,
+  CircleHelp,
   Coffee,
   Heart,
   Landmark,
@@ -37,9 +37,9 @@ const PREFERENCE_CATEGORIES = [
 ] as const
 
 const tools = [
-  { href: "/dashboard/itinerary", label: "Itinerary planner", description: "Plan your days in Iloilo", icon: CalendarDays },
   { href: "/dashboard/translator", label: "Translator", description: "English ↔ Ilonggo phrases", icon: Languages },
   { href: "/dashboard/saved-routes", label: "Saved routes", description: "Trips you bookmarked", icon: BookmarkCheck },
+  { href: "/dashboard/help", label: "Help & FAQs", description: "How iLOcate works, and the team behind it", icon: CircleHelp },
 ]
 
 function toSummary(item: LikedItem): PlaceSummary {

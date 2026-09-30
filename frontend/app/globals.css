@@ -107,15 +107,6 @@
   }
 }
 
-@keyframes scroll-up {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50%);
-  }
-}
-
 /* Leaflet locate control styles */
 .leaflet-control-locate {
   background-color: white;
@@ -155,43 +146,4 @@
   .map-mobile-chrome .leaflet-bottom {
     bottom: var(--map-bottom-offset, 0px);
   }
-}
-
-@keyframes scroll-down {
-  0% {
-    transform: translateY(-50%);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-.animate-scroll-up {
-  animation: scroll-up 140s linear infinite;
-}
-
-.animate-scroll-down {
-  animation: scroll-down 140s linear infinite;
-}
-
-.animate-scroll-up:hover,
-.animate-scroll-down:hover {
-  animation-play-state: paused;
-}
-
-@keyframes infinite-scroll-x {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-infinite-scroll-x {
-  animation: infinite-scroll-x 70s linear infinite;
-}
-
-.animate-infinite-scroll-x:hover {
-  animation-play-state: paused;
 }

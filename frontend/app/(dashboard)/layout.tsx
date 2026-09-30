@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation"
 import {
   BookmarkCheck,
   Building2,
-  CalendarDays,
+  CircleHelp,
   Home,
   Languages,
   Map,
@@ -30,7 +30,6 @@ const desktopLinks = [
   { href: "/dashboard/map", label: "Map", icon: Map },
   { href: "/dashboard/places", label: "Places", icon: Building2 },
   { href: "/dashboard/food", label: "Food", icon: Utensils },
-  { href: "/dashboard/itinerary", label: "Itinerary", icon: CalendarDays },
   { href: "/dashboard/translator", label: "Translator", icon: Languages },
   { href: "/dashboard/saved-routes", label: "Saved", icon: BookmarkCheck },
 ]
@@ -46,7 +45,6 @@ const tabLinks = [
 
 // Secondary tools reachable from the avatar menu
 const toolLinks = [
-  { href: "/dashboard/itinerary", label: "Itinerary planner", icon: CalendarDays },
   { href: "/dashboard/translator", label: "Translator", icon: Languages },
   { href: "/dashboard/saved-routes", label: "Saved routes", icon: BookmarkCheck },
 ]
@@ -80,6 +78,11 @@ function UserMenu() {
             </Link>
           </DropdownMenuItem>
         ))}
+        <DropdownMenuItem asChild className="min-h-10">
+          <Link href="/dashboard/help">
+            <CircleHelp className="h-4 w-4" /> Help & FAQs
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -12,6 +12,13 @@ const nextConfig = {
     root: repoRoot,
   },
   outputFileTracingRoot: repoRoot,
+  // Old landing/itinerary URLs now live inside the app
+  async redirects() {
+    return [
+      { source: '/faqs', destination: '/dashboard/help', permanent: true },
+      { source: '/dashboard/itinerary', destination: '/dashboard', permanent: true },
+    ]
+  },
   images: {
     unoptimized: true,
     qualities: [75, 90], // Added to support quality 90

@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'iLOcate - Explore Iloilo',
     short_name: 'iLOcate',
     description: 'Jeepney routes, directions, places and food in Iloilo City.',
-    start_url: '/dashboard',
+    start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
