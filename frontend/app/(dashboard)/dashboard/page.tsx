@@ -9,9 +9,9 @@ import { landmarks } from "@ilocate/backend/landmarks"
 import { loadAndDecodeRoutes, type DecodedRoute } from "@ilocate/backend/routes"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
-import { useLikedItems } from "@/lib/likes"
+import { likedItemFromPlace, useLikedItems } from "@/lib/likes"
 import { getUserPreferences } from "@/lib/preferences"
-import { getPlaceImage, getRating, isFoodType, toLandmarkSlug } from "@/lib/places"
+import { getPlaceImage, getRating, isFoodType } from "@/lib/places"
 
 const MapComponent = dynamic(() => import("@/components/map-leaflet"), {
   ssr: false,
@@ -118,15 +118,7 @@ export default function DashboardPage() {
     }))
   }, [preferences])
 
-  const likePlace = (place: PlaceSummary) =>
-    toggleLike({
-      id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
-      name: place.name,
-      category: place.kind,
-      image: place.image,
-      rating: place.rating,
-      label: place.category,
-    })
+  const likePlace = (place: PlaceSummary) => toggleLike(likedItemFromPlace(place))
 
   const firstName = "Explorer"
   const foodCount = landmarks.filter((l) => isFoodType(l.type)).length
