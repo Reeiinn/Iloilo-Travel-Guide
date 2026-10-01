@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Search, SearchX, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { CategoryChips } from "@/components/category-chips"
 import { PageHeader } from "@/components/page-header"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
@@ -95,6 +96,16 @@ export function ListingView({
           <SearchX className="mb-3 h-10 w-10 text-muted-foreground/50" />
           <p className="font-semibold text-foreground">No matches</p>
           <p className="mt-1 text-sm text-muted-foreground">Try another name or category.</p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => {
+              setSearch("")
+              setActiveCategory("All")
+            }}
+          >
+            Show everything
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5">
