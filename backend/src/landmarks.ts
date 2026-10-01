@@ -391,12 +391,6 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/places/Churches/st. isidore.jpg",
   },
   {
-    name: "Doane Baptist Church",
-    type: "Church",
-    coordinates: [10.702269251099665, 122.56783455811234],
-    imageUrl: "/images/places/Churches/doane church.jpg",
-  },
-  {
     name: "Santo Tomas de Villanueva Parish - Miagao Church (Archdiocese of Jaro)",
     type: "Church",
     coordinates: [10.64200874690313, 122.23530092501237],
