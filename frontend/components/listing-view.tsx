@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Search, SearchX } from "lucide-react"
+import { Search, SearchX, X } from "lucide-react"
 import { CategoryChips } from "@/components/category-chips"
 import { PageHeader } from "@/components/page-header"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
@@ -74,8 +74,18 @@ export function ListingView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             enterKeyHint="search"
-            className="h-12 w-full rounded-2xl border border-input bg-card pl-10 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:text-sm"
+            className="h-12 w-full rounded-2xl border border-input bg-card pl-10 pr-12 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:text-sm"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-0.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <CategoryChips options={categories} value={activeCategory} onChange={setActiveCategory} />
       </div>
