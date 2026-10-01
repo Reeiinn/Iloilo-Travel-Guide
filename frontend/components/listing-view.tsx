@@ -50,7 +50,7 @@ export function ListingView({
     return items.filter(
       (item) =>
         (activeCategory === "All" || item.filters.includes(activeCategory)) &&
-        (!query || item.name.toLowerCase().includes(query)),
+        (!query || item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query)),
     )
   }, [items, activeCategory, search])
 
