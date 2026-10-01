@@ -33,7 +33,7 @@ function placeFilters(name: string, type: string) {
 
 const allPlaces: ListingItem[] = landmarks
   .filter((landmark) => !isFoodType(landmark.type))
-  .map((landmark) => ({
+  .map((landmark): ListingItem => ({
     name: landmark.name,
     image: getPlaceImage(landmark.type, landmark.imageUrl),
     category: landmark.type,
@@ -41,6 +41,7 @@ const allPlaces: ListingItem[] = landmarks
     kind: "Place",
     filters: placeFilters(landmark.name, landmark.type),
   }))
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 export default function PlacesPage() {
   return (
