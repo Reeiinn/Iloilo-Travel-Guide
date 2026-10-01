@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { findLandmarkByName } from "@/lib/places"
+import type { PlaceSummary } from "@/components/place-card"
+import { findLandmarkByName, toLandmarkSlug } from "@/lib/places"
 
 export type LikedItem = {
   id: string
@@ -89,6 +90,18 @@ function writeLikedItems(items: LikedItem[]) {
 }
 
 const nameKey = (name: string) => name.trim().toLowerCase()
+
+/** The liked-item record for a place or food card, so every page saves likes the same way. */
+export function likedItemFromPlace(place: PlaceSummary): LikedItem {
+  return {
+    id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
+    name: place.name,
+    category: place.kind,
+    image: place.image,
+    rating: place.rating,
+    label: place.category,
+  }
+}
 
 /**
  * Liked places and food, stored in localStorage and kept in sync across pages and tabs.
