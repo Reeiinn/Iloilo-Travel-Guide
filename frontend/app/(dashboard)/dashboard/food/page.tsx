@@ -34,7 +34,7 @@ function getFoodCategory(name: string, type: string) {
 
 const allFood: ListingItem[] = landmarks
   .filter((landmark) => isFoodType(landmark.type))
-  .map((landmark) => {
+  .map((landmark): ListingItem => {
     const category = getFoodCategory(landmark.name, landmark.type)
     return {
       name: landmark.name,
@@ -45,6 +45,7 @@ const allFood: ListingItem[] = landmarks
       filters: [category],
     }
   })
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 export default function FoodPage() {
   return (
