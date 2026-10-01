@@ -15,6 +15,7 @@ export function getRating(type: string) {
   if (type === "Heritage" || type === "Church") return 4.7
   if (type === "Museum" || type === "Urban") return 4.6
   if (type === "Mall") return 4.4
+  if (type === "Beach") return 4.5
   return 4.0
 }
 
