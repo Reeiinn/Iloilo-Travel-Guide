@@ -7,8 +7,7 @@ import { CategoryChips } from "@/components/category-chips"
 import { PageHeader } from "@/components/page-header"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
-import { useLikedItems } from "@/lib/likes"
-import { toLandmarkSlug } from "@/lib/places"
+import { likedItemFromPlace, useLikedItems } from "@/lib/likes"
 
 export type ListingItem = PlaceSummary & {
   /** Which chip(s) this item belongs to, besides "All" */
@@ -55,15 +54,7 @@ export function ListingView({
     )
   }, [items, activeCategory, search])
 
-  const likePlace = (place: PlaceSummary) =>
-    toggleLike({
-      id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
-      name: place.name,
-      category: place.kind,
-      image: place.image,
-      rating: place.rating,
-      label: place.category,
-    })
+  const likePlace = (place: PlaceSummary) => toggleLike(likedItemFromPlace(place))
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-8 pt-5 lg:px-6 lg:pt-8">
