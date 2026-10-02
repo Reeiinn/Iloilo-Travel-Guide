@@ -16,6 +16,14 @@ const sampleTranslations: Record<string, string> = {
   "beautiful": "Matahum",
   "i love iloilo": "Palangga ko ang Iloilo",
   "excuse me": "Palihog",
+  "good afternoon": "Maayong hapon",
+  "goodbye": "Asta sa liwat",
+  "yes": "Huo",
+  "no": "Indi",
+  "how are you": "Kamusta ka?",
+  "i am full": "Busog na ako",
+  "stop here please": "Para lang",
+  "how much is the fare": "Tag-pila ang pliti?",
 }
 
 const languages = ["English", "Ilonggo", "Filipino"]
