@@ -46,7 +46,8 @@ export default function TranslatorPage() {
   }
 
   const translate = (text: string) => {
-    const key = text.toLowerCase().trim()
+    // "Thank you!" and "how much is this?" should still match the phrase list
+    const key = text.toLowerCase().replace(/[?!.,]+/g, "").replace(/\s+/g, " ").trim()
     setOutputText(sampleTranslations[key] ?? `[Translation of "${text}" to ${toLang}]`)
   }
 
