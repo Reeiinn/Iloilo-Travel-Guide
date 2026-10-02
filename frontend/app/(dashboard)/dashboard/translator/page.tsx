@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowRightLeft, Check, Copy, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
@@ -37,6 +37,9 @@ export default function TranslatorPage() {
   const [inputText, setInputText] = useState("")
   const [outputText, setOutputText] = useState("")
   const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), [])
 
   const swapLanguages = () => {
     setFromLang(toLang)
@@ -55,7 +58,8 @@ export default function TranslatorPage() {
     try {
       await navigator.clipboard.writeText(outputText)
       setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      clearTimeout(copiedTimer.current)
+      copiedTimer.current = setTimeout(() => setCopied(false), 1500)
     } catch {
       // Clipboard can be blocked (e.g. non-HTTPS); nothing else to do
     }
