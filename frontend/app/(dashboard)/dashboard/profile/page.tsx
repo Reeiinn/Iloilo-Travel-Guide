@@ -47,7 +47,6 @@ export default function ProfilePage() {
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
   const [savedPreferences, setSavedPreferences] = useState<string[]>([])
   const [loadingPreferences, setLoadingPreferences] = useState(true)
-  const [savingPreferences, setSavingPreferences] = useState(false)
   const [selected, setSelected] = useState<LikedItem | null>(null)
 
   useEffect(() => {
@@ -64,16 +63,10 @@ export default function ProfilePage() {
     selectedPreferences.length !== savedPreferences.length ||
     selectedPreferences.some((pref) => !savedPreferences.includes(pref))
 
-  const handleSavePreferences = async () => {
-    setSavingPreferences(true)
-    try {
-      saveUserPreferences(selectedPreferences)
-      setSavedPreferences(selectedPreferences)
-    } catch (error) {
-      console.error("Error saving preferences:", error)
-    } finally {
-      setSavingPreferences(false)
-    }
+  // Saving is a synchronous localStorage write that never throws, so no pending state is needed
+  const handleSavePreferences = () => {
+    saveUserPreferences(selectedPreferences)
+    setSavedPreferences(selectedPreferences)
   }
 
   const userName = "iLOcate Explorer"
@@ -151,9 +144,8 @@ export default function ProfilePage() {
               })}
             </div>
             {preferencesChanged && (
-              <Button onClick={handleSavePreferences} disabled={savingPreferences} className="mt-4 w-full sm:w-auto">
-                {savingPreferences && <Loader2 className="animate-spin" />}
-                {savingPreferences ? "Saving…" : "Save interests"}
+              <Button onClick={handleSavePreferences} className="mt-4 w-full sm:w-auto">
+                Save interests
               </Button>
             )}
           </>
