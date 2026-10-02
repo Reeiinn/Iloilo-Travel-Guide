@@ -61,12 +61,6 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Restaurant/kalanph.webp",
   },
   {
-    name: "Sa Poste Café - Del Carmen Jaro",
-    type: "Food",
-    coordinates: [10.718892086382088, 122.56354623172219],
-    imageUrl: "/images/icons/placeholder.jpg",
-  },
-  {
     name: "Pat-Pat's Kansi House",
     type: "Food",
     coordinates: [10.723337086662148, 122.55733416770454],
