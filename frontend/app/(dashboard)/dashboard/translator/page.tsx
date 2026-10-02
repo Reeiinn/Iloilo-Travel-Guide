@@ -19,6 +19,8 @@ const sampleTranslations: Record<string, string> = {
 }
 
 const languages = ["English", "Ilonggo", "Filipino"]
+// Browsers have no Ilonggo voice; a Filipino voice reads it closest to how it sounds
+const speechLang: Record<string, string> = { English: "en-US", Ilonggo: "fil-PH", Filipino: "fil-PH" }
 const charLimit = 500
 
 export default function TranslatorPage() {
@@ -48,6 +50,14 @@ export default function TranslatorPage() {
     } catch {
       // Clipboard can be blocked (e.g. non-HTTPS); nothing else to do
     }
+  }
+
+  const speakOutput = () => {
+    if (!("speechSynthesis" in window)) return
+    const utterance = new SpeechSynthesisUtterance(outputText)
+    utterance.lang = speechLang[toLang] ?? "en-US"
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
   }
 
   const selectClass =
@@ -102,7 +112,7 @@ export default function TranslatorPage() {
               <Button variant="ghost" size="icon" onClick={copyOutput} disabled={!outputText} aria-label="Copy translation">
                 {copied ? <Check className="text-primary" /> : <Copy />}
               </Button>
-              <Button variant="ghost" size="icon" disabled={!outputText} aria-label="Listen to translation">
+              <Button variant="ghost" size="icon" onClick={speakOutput} disabled={!outputText} aria-label="Listen to translation">
                 <Volume2 />
               </Button>
             </div>
