@@ -2,22 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import {
-  BookmarkCheck,
-  Check,
-  ChevronRight,
-  Church,
-  CircleHelp,
-  Coffee,
-  Heart,
-  Landmark,
-  Languages,
-  Loader2,
-  ShoppingBag,
-  Sparkles,
-  UtensilsCrossed,
-  Waves,
-} from "lucide-react"
+import { BookmarkCheck, Check, ChevronRight, CircleHelp, Heart, Languages, Loader2, Sparkles } from "lucide-react"
+import { INTEREST_CATEGORIES } from "@/lib/interests"
 import { getUserPreferences, saveUserPreferences } from "@/lib/preferences"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -25,16 +11,6 @@ import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
 import { useLikedItems, type LikedItem } from "@/lib/likes"
 import { cn } from "@/lib/utils"
-
-const PREFERENCE_CATEGORIES = [
-  { id: "coffee-shops", label: "Coffee Shops", icon: Coffee },
-  { id: "restaurants", label: "Restaurants", icon: UtensilsCrossed },
-  { id: "beaches", label: "Beaches", icon: Waves },
-  { id: "churches", label: "Churches", icon: Church },
-  { id: "malls", label: "Malls", icon: ShoppingBag },
-  { id: "city-landmarks", label: "Landmarks", icon: Landmark },
-  { id: "museums", label: "Museums", icon: Landmark },
-] as const
 
 const tools = [
   { href: "/dashboard/translator", label: "Translator", description: "English ↔ Ilonggo phrases", icon: Languages },
@@ -153,7 +129,7 @@ export default function ProfilePage() {
           <>
             <p className="mb-3 text-sm text-muted-foreground">We use these to pick recommendations for you.</p>
             <div className="flex flex-wrap gap-2">
-              {PREFERENCE_CATEGORIES.map((category) => {
+              {INTEREST_CATEGORIES.map((category) => {
                 const isSelected = selectedPreferences.includes(category.id)
                 return (
                   <button
