@@ -92,6 +92,13 @@ export default function TranslatorPage() {
             id="translate-input"
             value={inputText}
             onChange={(e) => setInputText(e.target.value.slice(0, charLimit))}
+            onKeyDown={(e) => {
+              // Ctrl/Cmd+Enter translates; plain Enter still adds a new line
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && inputText.trim()) {
+                e.preventDefault()
+                translate(inputText)
+              }
+            }}
             placeholder="Type something…"
             rows={4}
             className="w-full resize-none rounded-2xl border border-input bg-background p-4 pb-10 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
