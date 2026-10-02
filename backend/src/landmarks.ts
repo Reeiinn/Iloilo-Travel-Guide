@@ -1,8 +1,10 @@
+export type LandmarkType = "Food" | "Cafe" | "Church" | "Museum" | "Heritage" | "Urban" | "Mall" | "Beach"
+
 export interface Landmark {
   name: string
-  type: string
+  type: LandmarkType
   coordinates: [number, number] // [lat, lng]
-  imageUrl?: string // Added imageUrl property
+  imageUrl?: string // Path under frontend/public; pages fall back to a category photo when missing
 }
 
 export const landmarks: Landmark[] = [
