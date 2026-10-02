@@ -64,6 +64,7 @@ function orderByStableHash<T extends { name: string; type: string }>(items: T[])
 
 function greeting() {
   const hour = new Date().getHours()
+  if (hour < 4) return "Maayong gab-i"
   if (hour < 12) return "Maayong aga"
   if (hour < 18) return "Maayong hapon"
   return "Maayong gab-i"
