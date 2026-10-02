@@ -79,10 +79,10 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Local Food/netong's lapaz food.png",
   },
   {
-    name: "Madge Cafe",
-    type: "Food",
+    name: "Madge Cafe - La Paz",
+    type: "Cafe",
     coordinates: [10.709116791570953, 122.56795493464733],
-    imageUrl: "/images/food/Cafes/madge atria cafe.jpg",
+    imageUrl: "/images/food/Cafes/madge lapaz cafe.jpg",
   },
   {
     name: "Roberto's",
@@ -217,7 +217,7 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Cafes/flour bakery.jpg",
   },
   {
-    name: "Madge Cafe",
+    name: "Madge Cafe - Atria",
     type: "Cafe",
     coordinates: [10.707186575535314, 122.54891614533973],
     imageUrl: "/images/food/Cafes/madge atria cafe.jpg",
