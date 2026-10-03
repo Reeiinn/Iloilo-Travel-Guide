@@ -46,8 +46,8 @@ const faqs = [
 export function FaqList() {
   return (
     <Accordion type="single" collapsible className="w-full">
-      {faqs.map((faq, index) => (
-        <AccordionItem key={index} value={`item-${index}`} className="border-b border-border/60 last:border-b-0">
+      {faqs.map((faq) => (
+        <AccordionItem key={faq.question} value={faq.question} className="border-b border-border/60 last:border-b-0">
           <AccordionTrigger className="min-h-14 py-4 text-left text-sm font-semibold text-foreground hover:text-primary hover:no-underline">
             {faq.question}
           </AccordionTrigger>
