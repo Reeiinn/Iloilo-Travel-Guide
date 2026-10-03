@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 
 interface AboutUsModalProps {
@@ -33,6 +33,15 @@ export const AboutUsModal: React.FC<AboutUsModalProps> = ({ open, onClose }) => 
       alt: "Trisha Jambaro",
     },
   ];
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
   return (
