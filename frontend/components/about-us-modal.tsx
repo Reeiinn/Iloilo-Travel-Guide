@@ -45,7 +45,11 @@ export const AboutUsModal: React.FC<AboutUsModalProps> = ({ open, onClose }) => 
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm animate-in fade-in duration-300">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm animate-in fade-in duration-300"
+      // Tapping the dimmed backdrop (not the card itself) closes the modal
+      onClick={(event) => event.target === event.currentTarget && onClose()}
+    >
       <div
         role="dialog"
         aria-modal="true"
