@@ -46,7 +46,11 @@ export const AboutUsModal: React.FC<AboutUsModalProps> = ({ open, onClose }) => 
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="relative flex max-h-[92vh] w-full max-w-5xl flex-col items-center overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl shadow-black/20 animate-in fade-in zoom-in-95 duration-300 sm:p-8 lg:p-10">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-us-title"
+        className="relative flex max-h-[92vh] w-full max-w-5xl flex-col items-center overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl shadow-black/20 animate-in fade-in zoom-in-95 duration-300 sm:p-8 lg:p-10">
         <button
           className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-slate-100 hover:text-gray-700"
           onClick={onClose}
@@ -56,7 +60,7 @@ export const AboutUsModal: React.FC<AboutUsModalProps> = ({ open, onClose }) => 
         </button>
         <div className="mb-8 w-full">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-primary/80">The people behind iLOcate</p>
-          <h2 className="text-2xl font-bold text-primary sm:text-3xl">Meet the Team</h2>
+          <h2 id="about-us-title" className="text-2xl font-bold text-primary sm:text-3xl">Meet the Team</h2>
         </div>
 
         <section className="mb-10 w-full space-y-4">
