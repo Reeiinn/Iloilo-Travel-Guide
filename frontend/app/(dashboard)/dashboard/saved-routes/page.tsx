@@ -28,8 +28,20 @@ const initialRoutes: SavedRoute[] = [
 export default function SavedRoutesPage() {
   const [routes, setRoutes] = useState(initialRoutes)
   const [expandedRoute, setExpandedRoute] = useState<number | null>(null)
+  const [lastRemoved, setLastRemoved] = useState<{ route: SavedRoute; index: number } | null>(null)
 
-  const removeRoute = (id: number) => setRoutes((prev) => prev.filter((r) => r.id !== id))
+  const removeRoute = (id: number) => {
+    const index = routes.findIndex((r) => r.id === id)
+    if (index === -1) return
+    setLastRemoved({ route: routes[index], index })
+    setRoutes((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const undoRemove = () => {
+    if (!lastRemoved) return
+    setRoutes((prev) => [...prev.slice(0, lastRemoved.index), lastRemoved.route, ...prev.slice(lastRemoved.index)])
+    setLastRemoved(null)
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-8 pt-5 lg:pt-8">
@@ -37,6 +49,15 @@ export default function SavedRoutesPage() {
         title="Saved routes"
         description={`${routes.length} ${routes.length === 1 ? "route" : "routes"} bookmarked`}
       />
+
+      {lastRemoved && (
+        <div role="status" className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-foreground px-4 py-2 text-sm text-background">
+          <span className="min-w-0 truncate">Removed {lastRemoved.route.from} → {lastRemoved.route.to}</span>
+          <button type="button" onClick={undoRemove} className="min-h-10 shrink-0 font-semibold text-brand">
+            Undo
+          </button>
+        </div>
+      )}
 
       {routes.length === 0 ? (
         <div className="flex flex-col items-center rounded-3xl bg-card px-6 py-14 text-center shadow-sm">
