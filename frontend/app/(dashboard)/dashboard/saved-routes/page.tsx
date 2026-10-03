@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { BookmarkCheck, ChevronDown, Clock, Trash2, Wallet } from "lucide-react"
+import { BookmarkCheck, ChevronDown, Clock, Navigation, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
+import { directionsHref, findLandmarkByName } from "@/lib/places"
 import { cn } from "@/lib/utils"
 
 type SavedRoute = {
@@ -120,14 +121,22 @@ export default function SavedRoutesPage() {
                         <span className="text-muted-foreground">(End)</span>
                       </li>
                     </ol>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
-                      onClick={() => removeRoute(route.id)}
-                    >
-                      <Trash2 /> Remove
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        {/* Go straight to directions when the destination is a known landmark */}
+                        <Link href={findLandmarkByName(route.to) ? directionsHref(route.to) : "/dashboard/map"}>
+                          <Navigation /> Directions
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                        onClick={() => removeRoute(route.id)}
+                      >
+                        <Trash2 /> Remove
+                      </Button>
+                    </div>
                   </div>
                 )}
               </li>
