@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Clock, Heart, MapPin, Navigation, Wallet } from "lucide-react"
+import { Clock, Heart, MapPin, Navigation, Share2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { directionsHref } from "@/lib/places"
@@ -25,6 +25,19 @@ export function PlaceSheet({
   onClose: () => void
 }) {
   const router = useRouter()
+
+  const share = async (name: string) => {
+    const url = new URL(directionsHref(name), window.location.origin).toString()
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name, text: `${name} · iLOcate`, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+      }
+    } catch {
+      // The user closed the share sheet, or clipboard access was blocked
+    }
+  }
 
   return (
     <Dialog open={place !== null} onOpenChange={(open) => !open && onClose()}>
@@ -65,18 +78,29 @@ export function PlaceSheet({
                     <MapPin className="h-3.5 w-3.5" aria-hidden /> Iloilo City
                   </DialogDescription>
                 </div>
-                {onToggleLike && (
+                <div className="flex shrink-0 gap-2">
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={onToggleLike}
-                    aria-label={liked ? `Unlike ${place.name}` : `Like ${place.name}`}
-                    aria-pressed={liked}
-                    className="shrink-0 rounded-full"
+                    onClick={() => share(place.name)}
+                    aria-label={`Share ${place.name}`}
+                    className="rounded-full"
                   >
-                    <Heart className={cn(liked ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                    <Share2 className="text-muted-foreground" />
                   </Button>
-                )}
+                  {onToggleLike && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={onToggleLike}
+                      aria-label={liked ? `Unlike ${place.name}` : `Like ${place.name}`}
+                      aria-pressed={liked}
+                      className="rounded-full"
+                    >
+                      <Heart className={cn(liked ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <dl className="grid grid-cols-2 gap-2">
