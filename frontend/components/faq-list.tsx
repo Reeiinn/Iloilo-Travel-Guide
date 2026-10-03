@@ -24,6 +24,20 @@ const faqs = [
       "Yes. Open iLOcate in your phone's browser and choose \"Add to Home Screen\" (Safari share menu on iPhone, or the ⋮ menu in Chrome on Android). It opens full screen like a regular app.",
   },
   {
+    question: "How much is a jeepney fare in Iloilo?",
+    answer:
+      "Most trips within the city cost about PHP 10–30 depending on distance. Fares shown in iLOcate are estimates, so check the fare matrix posted inside the jeepney.",
+  },
+  {
+    question: "How do I save a place for later?",
+    answer:
+      "Tap the heart on any place or food card. Everything you like is listed under Profile, and it stays saved in this browser.",
+  },
+  {
+    question: "How do I change my interests?",
+    answer: "Go to Profile, tap the interests you want, then tap Save interests. Home will pick recommendations to match.",
+  },
+  {
     question: "Does the map work offline?",
     answer: "Not yet. The map and directions need an internet connection.",
   },
