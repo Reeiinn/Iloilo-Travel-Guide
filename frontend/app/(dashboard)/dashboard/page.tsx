@@ -109,7 +109,8 @@ export default function DashboardPage() {
   const recommended = useMemo<PlaceSummary[]>(() => {
     const selectedTypes = new Set(preferences.flatMap((pref) => preferenceToLandmarkTypes[pref] ?? []))
     const preferred = landmarks.filter((landmark) => selectedTypes.has(landmark.type))
-    const source = preferred.length > 0 ? preferred : orderByStableHash(landmarks)
+    // Shuffle preferred picks too, or the first interest in file order fills all 12 slots
+    const source = orderByStableHash(preferred.length > 0 ? preferred : landmarks)
     return source.slice(0, 12).map((landmark) => ({
       name: landmark.name,
       image: getPlaceImage(landmark.type, landmark.imageUrl),
