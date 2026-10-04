@@ -117,6 +117,9 @@ export function PlaceSheet({
                   <dd className="mt-1 text-sm font-semibold text-foreground">PHP 10–30</dd>
                 </div>
               </dl>
+              <p className="-mt-2 text-xs text-muted-foreground">
+                Typical city jeepney trip. Exact time and fare depend on where you start.
+              </p>
 
               <div className="flex flex-col gap-2 sm:flex-row-reverse">
                 <Button
