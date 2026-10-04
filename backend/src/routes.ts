@@ -9,6 +9,10 @@ function decodeSingleValue(encoded: string, startIndex: number) {
   let index = startIndex;
 
   while (true) {
+    // A truncated polyline would otherwise read NaN forever and hang the page
+    if (index >= encoded.length) {
+      throw new Error("Truncated polyline");
+    }
     const byte = encoded.charCodeAt(index++) - 63;
     result |= (byte & 0x1f) << shift;
     shift += 5;
