@@ -61,7 +61,17 @@ function parseLikedItems(raw: string | null): LikedItem[] {
   try {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.map(normalizeItem).filter((item): item is LikedItem => Boolean(item))
+    // Likes match by name, so a name saved twice (e.g. by an older build) should only show once
+    const seen = new Set<string>()
+    return parsed
+      .map(normalizeItem)
+      .filter((item): item is LikedItem => Boolean(item))
+      .filter((item) => {
+        const key = item.name.trim().toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
   } catch {
     return []
   }
