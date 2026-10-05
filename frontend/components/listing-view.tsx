@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Search, SearchX, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CategoryChips } from "@/components/category-chips"
@@ -35,6 +35,8 @@ export function ListingView({
   items: ListingItem[]
 }) {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
   const { isLiked, toggleLike } = useLikedItems()
   const [activeCategory, setActiveCategory] = useState("All")
   const [search, setSearch] = useState("")
@@ -43,8 +45,15 @@ export function ListingView({
   useEffect(() => {
     const category = searchParams.get("category")?.toLowerCase().trim()
     const resolved = category ? queryCategories[category] : undefined
-    if (resolved) setActiveCategory(resolved)
+    setActiveCategory(resolved ?? "All")
   }, [searchParams, queryCategories])
+
+  // Mirror the chip in ?category= so reloads and shared links keep the filter
+  const selectCategory = (category: string) => {
+    setActiveCategory(category)
+    const slug = Object.keys(queryCategories).find((key) => queryCategories[key] === category)
+    router.replace(slug && category !== "All" ? `${pathname}?category=${slug}` : pathname, { scroll: false })
+  }
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase().trim()
@@ -100,7 +109,7 @@ export function ListingView({
             </button>
           )}
         </div>
-        <CategoryChips options={categories} value={activeCategory} onChange={setActiveCategory} counts={counts} />
+        <CategoryChips options={categories} value={activeCategory} onChange={selectCategory} counts={counts} />
       </div>
 
       {filtered.length === 0 ? (
@@ -113,7 +122,7 @@ export function ListingView({
             className="mt-4"
             onClick={() => {
               setSearch("")
-              setActiveCategory("All")
+              selectCategory("All")
             }}
           >
             Show everything
