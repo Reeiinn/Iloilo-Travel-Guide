@@ -55,6 +55,18 @@ export function ListingView({
     )
   }, [items, activeCategory, search])
 
+  // How many items each chip would show, so empty categories are obvious before tapping
+  const counts = useMemo(
+    () =>
+      Object.fromEntries(
+        categories.map((category) => [
+          category,
+          category === "All" ? items.length : items.filter((item) => item.filters.includes(category)).length,
+        ]),
+      ),
+    [categories, items],
+  )
+
   const likePlace = (place: PlaceSummary) => toggleLike(likedItemFromPlace(place))
 
   return (
@@ -88,7 +100,7 @@ export function ListingView({
             </button>
           )}
         </div>
-        <CategoryChips options={categories} value={activeCategory} onChange={setActiveCategory} />
+        <CategoryChips options={categories} value={activeCategory} onChange={setActiveCategory} counts={counts} />
       </div>
 
       {filtered.length === 0 ? (
