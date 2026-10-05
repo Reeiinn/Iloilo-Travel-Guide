@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowRightLeft, Check, Copy, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
@@ -16,9 +16,19 @@ const sampleTranslations: Record<string, string> = {
   "beautiful": "Matahum",
   "i love iloilo": "Palangga ko ang Iloilo",
   "excuse me": "Palihog",
+  "good afternoon": "Maayong hapon",
+  "goodbye": "Asta sa liwat",
+  "yes": "Huo",
+  "no": "Indi",
+  "how are you": "Kamusta ka?",
+  "i am full": "Busog na ako",
+  "stop here please": "Para lang",
+  "how much is the fare": "Tag-pila ang pliti?",
 }
 
 const languages = ["English", "Ilonggo", "Filipino"]
+// Browsers have no Ilonggo voice; a Filipino voice reads it closest to how it sounds
+const speechLang: Record<string, string> = { English: "en-US", Ilonggo: "fil-PH", Filipino: "fil-PH" }
 const charLimit = 500
 
 export default function TranslatorPage() {
@@ -27,6 +37,9 @@ export default function TranslatorPage() {
   const [inputText, setInputText] = useState("")
   const [outputText, setOutputText] = useState("")
   const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), [])
 
   const swapLanguages = () => {
     setFromLang(toLang)
@@ -35,19 +48,35 @@ export default function TranslatorPage() {
     setOutputText(inputText)
   }
 
+  // Picking the other side's language swaps the pair instead of translating a language into itself
+  const chooseFrom = (lang: string) => (lang === toLang ? swapLanguages() : setFromLang(lang))
+  const chooseTo = (lang: string) => (lang === fromLang ? swapLanguages() : setToLang(lang))
+
   const translate = (text: string) => {
-    const key = text.toLowerCase().trim()
-    setOutputText(sampleTranslations[key] ?? `[Translation of "${text}" to ${toLang}]`)
+    // "Thank you!" and "how much is this?" should still match the phrase list
+    const key = text.toLowerCase().replace(/[?!.,]+/g, "").replace(/\s+/g, " ").trim()
+    setOutputText(
+      sampleTranslations[key] ?? `We don't have "${text.trim()}" yet. Try one of the common phrases below.`,
+    )
   }
 
   const copyOutput = async () => {
     try {
       await navigator.clipboard.writeText(outputText)
       setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
+      clearTimeout(copiedTimer.current)
+      copiedTimer.current = setTimeout(() => setCopied(false), 1500)
     } catch {
       // Clipboard can be blocked (e.g. non-HTTPS); nothing else to do
     }
+  }
+
+  const speakOutput = () => {
+    if (!("speechSynthesis" in window)) return
+    const utterance = new SpeechSynthesisUtterance(outputText)
+    utterance.lang = speechLang[toLang] ?? "en-US"
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
   }
 
   const selectClass =
@@ -60,7 +89,7 @@ export default function TranslatorPage() {
       <div className="rounded-3xl bg-card p-4 shadow-sm sm:p-5">
         <div className="mb-4 flex items-center gap-2">
           <label htmlFor="from-lang" className="sr-only">From language</label>
-          <select id="from-lang" value={fromLang} onChange={(e) => setFromLang(e.target.value)} className={selectClass}>
+          <select id="from-lang" value={fromLang} onChange={(e) => chooseFrom(e.target.value)} className={selectClass}>
             {languages.map((lang) => (
               <option key={lang}>{lang}</option>
             ))}
@@ -69,7 +98,7 @@ export default function TranslatorPage() {
             <ArrowRightLeft />
           </Button>
           <label htmlFor="to-lang" className="sr-only">To language</label>
-          <select id="to-lang" value={toLang} onChange={(e) => setToLang(e.target.value)} className={selectClass}>
+          <select id="to-lang" value={toLang} onChange={(e) => chooseTo(e.target.value)} className={selectClass}>
             {languages.map((lang) => (
               <option key={lang}>{lang}</option>
             ))}
@@ -82,6 +111,13 @@ export default function TranslatorPage() {
             id="translate-input"
             value={inputText}
             onChange={(e) => setInputText(e.target.value.slice(0, charLimit))}
+            onKeyDown={(e) => {
+              // Ctrl/Cmd+Enter translates; plain Enter still adds a new line
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && inputText.trim()) {
+                e.preventDefault()
+                translate(inputText)
+              }
+            }}
             placeholder="Type something…"
             rows={4}
             className="w-full resize-none rounded-2xl border border-input bg-background p-4 pb-10 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -102,7 +138,7 @@ export default function TranslatorPage() {
               <Button variant="ghost" size="icon" onClick={copyOutput} disabled={!outputText} aria-label="Copy translation">
                 {copied ? <Check className="text-primary" /> : <Copy />}
               </Button>
-              <Button variant="ghost" size="icon" disabled={!outputText} aria-label="Listen to translation">
+              <Button variant="ghost" size="icon" onClick={speakOutput} disabled={!outputText} aria-label="Listen to translation">
                 <Volume2 />
               </Button>
             </div>

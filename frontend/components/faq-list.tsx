@@ -24,6 +24,20 @@ const faqs = [
       "Yes. Open iLOcate in your phone's browser and choose \"Add to Home Screen\" (Safari share menu on iPhone, or the ⋮ menu in Chrome on Android). It opens full screen like a regular app.",
   },
   {
+    question: "How much is a jeepney fare in Iloilo?",
+    answer:
+      "Most trips within the city cost about PHP 10–30 depending on distance. Fares shown in iLOcate are estimates, so check the fare matrix posted inside the jeepney.",
+  },
+  {
+    question: "How do I save a place for later?",
+    answer:
+      "Tap the heart on any place or food card. Everything you like is listed under Profile, and it stays saved in this browser.",
+  },
+  {
+    question: "How do I change my interests?",
+    answer: "Go to Profile, tap the interests you want, then tap Save interests. Home will pick recommendations to match.",
+  },
+  {
     question: "Does the map work offline?",
     answer: "Not yet. The map and directions need an internet connection.",
   },
@@ -32,8 +46,8 @@ const faqs = [
 export function FaqList() {
   return (
     <Accordion type="single" collapsible className="w-full">
-      {faqs.map((faq, index) => (
-        <AccordionItem key={index} value={`item-${index}`} className="border-b border-border/60 last:border-b-0">
+      {faqs.map((faq) => (
+        <AccordionItem key={faq.question} value={faq.question} className="border-b border-border/60 last:border-b-0">
           <AccordionTrigger className="min-h-14 py-4 text-left text-sm font-semibold text-foreground hover:text-primary hover:no-underline">
             {faq.question}
           </AccordionTrigger>

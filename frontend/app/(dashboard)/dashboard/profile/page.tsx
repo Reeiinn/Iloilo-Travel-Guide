@@ -2,22 +2,8 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import {
-  BookmarkCheck,
-  Check,
-  ChevronRight,
-  Church,
-  CircleHelp,
-  Coffee,
-  Heart,
-  Landmark,
-  Languages,
-  Loader2,
-  ShoppingBag,
-  Sparkles,
-  UtensilsCrossed,
-  Waves,
-} from "lucide-react"
+import { BookmarkCheck, Check, ChevronRight, CircleHelp, Heart, Languages, Loader2, Sparkles } from "lucide-react"
+import { INTEREST_CATEGORIES } from "@/lib/interests"
 import { getUserPreferences, saveUserPreferences } from "@/lib/preferences"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -25,16 +11,6 @@ import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
 import { useLikedItems, type LikedItem } from "@/lib/likes"
 import { cn } from "@/lib/utils"
-
-const PREFERENCE_CATEGORIES = [
-  { id: "coffee-shops", label: "Coffee Shops", icon: Coffee },
-  { id: "restaurants", label: "Restaurants", icon: UtensilsCrossed },
-  { id: "beaches", label: "Beaches", icon: Waves },
-  { id: "churches", label: "Churches", icon: Church },
-  { id: "malls", label: "Malls", icon: ShoppingBag },
-  { id: "city-landmarks", label: "Landmarks", icon: Landmark },
-  { id: "museums", label: "Museums", icon: Landmark },
-] as const
 
 const tools = [
   { href: "/dashboard/translator", label: "Translator", description: "English ↔ Ilonggo phrases", icon: Languages },
@@ -67,11 +43,10 @@ function Section({ title, icon: Icon, children, action }: { title: string; icon:
 }
 
 export default function ProfilePage() {
-  const { likedItems, toggleLike } = useLikedItems()
+  const { likedItems, toggleLike, clearLikes } = useLikedItems()
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
   const [savedPreferences, setSavedPreferences] = useState<string[]>([])
   const [loadingPreferences, setLoadingPreferences] = useState(true)
-  const [savingPreferences, setSavingPreferences] = useState(false)
   const [selected, setSelected] = useState<LikedItem | null>(null)
 
   useEffect(() => {
@@ -88,16 +63,10 @@ export default function ProfilePage() {
     selectedPreferences.length !== savedPreferences.length ||
     selectedPreferences.some((pref) => !savedPreferences.includes(pref))
 
-  const handleSavePreferences = async () => {
-    setSavingPreferences(true)
-    try {
-      saveUserPreferences(selectedPreferences)
-      setSavedPreferences(selectedPreferences)
-    } catch (error) {
-      console.error("Error saving preferences:", error)
-    } finally {
-      setSavingPreferences(false)
-    }
+  // Saving is a synchronous localStorage write that never throws, so no pending state is needed
+  const handleSavePreferences = () => {
+    saveUserPreferences(selectedPreferences)
+    setSavedPreferences(selectedPreferences)
   }
 
   const userName = "iLOcate Explorer"
@@ -153,7 +122,7 @@ export default function ProfilePage() {
           <>
             <p className="mb-3 text-sm text-muted-foreground">We use these to pick recommendations for you.</p>
             <div className="flex flex-wrap gap-2">
-              {PREFERENCE_CATEGORIES.map((category) => {
+              {INTEREST_CATEGORIES.map((category) => {
                 const isSelected = selectedPreferences.includes(category.id)
                 return (
                   <button
@@ -175,16 +144,29 @@ export default function ProfilePage() {
               })}
             </div>
             {preferencesChanged && (
-              <Button onClick={handleSavePreferences} disabled={savingPreferences} className="mt-4 w-full sm:w-auto">
-                {savingPreferences && <Loader2 className="animate-spin" />}
-                {savingPreferences ? "Saving…" : "Save interests"}
+              <Button onClick={handleSavePreferences} className="mt-4 w-full sm:w-auto">
+                Save interests
               </Button>
             )}
           </>
         )}
       </Section>
 
-      <Section title="Liked places & food" icon={Heart}>
+      <Section
+        title="Liked places & food"
+        icon={Heart}
+        action={
+          likedItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => window.confirm(`Remove all ${likedItems.length} liked places?`) && clearLikes()}
+              className="min-h-10 text-sm font-medium text-muted-foreground hover:text-destructive"
+            >
+              Clear all
+            </button>
+          )
+        }
+      >
         {likedItems.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-center">
             <Heart className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />

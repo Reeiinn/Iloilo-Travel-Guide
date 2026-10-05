@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { Search, SearchX } from "lucide-react"
+import { usePathname, useSearchParams } from "next/navigation"
+import { Search, SearchX, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { CategoryChips } from "@/components/category-chips"
 import { PageHeader } from "@/components/page-header"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
-import { useLikedItems } from "@/lib/likes"
-import { toLandmarkSlug } from "@/lib/places"
+import { likedItemFromPlace, useLikedItems } from "@/lib/likes"
 
 export type ListingItem = PlaceSummary & {
   /** Which chip(s) this item belongs to, besides "All" */
@@ -35,6 +35,7 @@ export function ListingView({
   items: ListingItem[]
 }) {
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const { isLiked, toggleLike } = useLikedItems()
   const [activeCategory, setActiveCategory] = useState("All")
   const [search, setSearch] = useState("")
@@ -43,27 +44,39 @@ export function ListingView({
   useEffect(() => {
     const category = searchParams.get("category")?.toLowerCase().trim()
     const resolved = category ? queryCategories[category] : undefined
-    if (resolved) setActiveCategory(resolved)
+    setActiveCategory(resolved ?? "All")
   }, [searchParams, queryCategories])
+
+  // Mirror the chip in ?category= so reloads and shared links keep the filter
+  const selectCategory = (category: string) => {
+    setActiveCategory(category)
+    const slug = Object.keys(queryCategories).find((key) => queryCategories[key] === category)
+    // Native replaceState updates useSearchParams without a server round trip
+    window.history.replaceState(null, "", slug && category !== "All" ? `${pathname}?category=${slug}` : pathname)
+  }
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase().trim()
     return items.filter(
       (item) =>
         (activeCategory === "All" || item.filters.includes(activeCategory)) &&
-        (!query || item.name.toLowerCase().includes(query)),
+        (!query || item.name.toLowerCase().includes(query) || item.category.toLowerCase().includes(query)),
     )
   }, [items, activeCategory, search])
 
-  const likePlace = (place: PlaceSummary) =>
-    toggleLike({
-      id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
-      name: place.name,
-      category: place.kind,
-      image: place.image,
-      rating: place.rating,
-      label: place.category,
-    })
+  // How many items each chip would show, so empty categories are obvious before tapping
+  const counts = useMemo(
+    () =>
+      Object.fromEntries(
+        categories.map((category) => [
+          category,
+          category === "All" ? items.length : items.filter((item) => item.filters.includes(category)).length,
+        ]),
+      ),
+    [categories, items],
+  )
+
+  const likePlace = (place: PlaceSummary) => toggleLike(likedItemFromPlace(place))
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-8 pt-5 lg:px-6 lg:pt-8">
@@ -83,10 +96,20 @@ export function ListingView({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             enterKeyHint="search"
-            className="h-12 w-full rounded-2xl border border-input bg-card pl-10 pr-4 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:text-sm"
+            className="h-12 w-full rounded-2xl border border-input bg-card pl-10 pr-12 text-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 md:text-sm"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-0.5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
-        <CategoryChips options={categories} value={activeCategory} onChange={setActiveCategory} />
+        <CategoryChips options={categories} value={activeCategory} onChange={selectCategory} counts={counts} />
       </div>
 
       {filtered.length === 0 ? (
@@ -94,6 +117,16 @@ export function ListingView({
           <SearchX className="mb-3 h-10 w-10 text-muted-foreground/50" />
           <p className="font-semibold text-foreground">No matches</p>
           <p className="mt-1 text-sm text-muted-foreground">Try another name or category.</p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => {
+              setSearch("")
+              selectCategory("All")
+            }}
+          >
+            Show everything
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5">

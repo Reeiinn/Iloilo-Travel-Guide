@@ -90,6 +90,8 @@ frontend/                 Next.js app (UI only)
   app/
     layout.tsx            Root layout (fonts, Vercel Analytics)
     page.tsx              Launch screen: sends first-time users to the welcome screen, others to Home
+    not-found.tsx         404 page
+    error.tsx             Error boundary with "Try again"
     (onboarding)/         First-launch welcome + interest selection (/preferences)
     login/page.tsx        Legacy login URL redirects to /dashboard
     signup/page.tsx       Legacy signup URL redirects to /dashboard
@@ -98,9 +100,13 @@ frontend/                 Next.js app (UI only)
   components/
     map-leaflet.tsx       Leaflet map (routes, landmarks, directions, pin drop)
     faq-list.tsx          FAQ accordion (Help & FAQs page)
+    listing-view.tsx      Searchable, filterable grid used by Places and Food
+    place-card.tsx        Photo card with a like button
+    place-sheet.tsx       Place details (bottom sheet on phones) with directions and share
     ui/                   shadcn/ui primitives in use (accordion, avatar, button, dialog, dropdown-menu)
   hooks/                  Shared React hooks
   lib/
+    interests.ts          Interest categories shown on the welcome screen and in Profile
     likes.ts              Liked places (localStorage, synced across pages)
     places.ts             Shared place helpers (images, ratings, slugs)
     preferences.ts        Browser-local interests + first-launch (onboarding) flag
@@ -119,7 +125,10 @@ backend/                  Data + services (@ilocate/backend)
 
 - **Add or edit a landmark:** edit `backend/src/landmarks.ts`. Put its photo in `frontend/public/images/...`.
 - **Update PUJ routes:** replace `backend/data/routes.json` (same format).
-- **Change browser-local interests:** edit `frontend/lib/preferences.ts`.
+- **Add or rename an interest:** edit `frontend/lib/interests.ts`, then map it to landmark types in `preferenceToLandmarkTypes` (`frontend/app/(dashboard)/dashboard/page.tsx`).
+- **Change how interests are stored:** edit `frontend/lib/preferences.ts`.
+- **Add a FAQ:** edit the `faqs` list in `frontend/components/faq-list.tsx`.
+- **Add a translator phrase:** edit `sampleTranslations` in `frontend/app/(dashboard)/dashboard/translator/page.tsx`.
 - **Change colors/theme:** edit the CSS variables at the top of `frontend/app/globals.css`.
 
 > 💡 Vercel runs on Linux, where **file names are case-sensitive**. For example, `aroma.JPG` and `aroma.jpg` are different files. Make image paths in the code match the file names exactly, or the images will work locally on Windows but break on Vercel.

@@ -1,8 +1,10 @@
+export type LandmarkType = "Food" | "Cafe" | "Church" | "Museum" | "Heritage" | "Urban" | "Mall" | "Beach"
+
 export interface Landmark {
   name: string
-  type: string
+  type: LandmarkType
   coordinates: [number, number] // [lat, lng]
-  imageUrl?: string // Added imageUrl property
+  imageUrl?: string // Path under frontend/public; pages fall back to a category photo when missing
 }
 
 export const landmarks: Landmark[] = [
@@ -61,12 +63,6 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Restaurant/kalanph.webp",
   },
   {
-    name: "Sa Poste Café - Del Carmen Jaro",
-    type: "Food",
-    coordinates: [10.718892086382088, 122.56354623172219],
-    imageUrl: "/images/icons/placeholder.jpg",
-  },
-  {
     name: "Pat-Pat's Kansi House",
     type: "Food",
     coordinates: [10.723337086662148, 122.55733416770454],
@@ -85,10 +81,10 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Local Food/netong's lapaz food.png",
   },
   {
-    name: "Madge Cafe",
-    type: "Food",
+    name: "Madge Cafe - La Paz",
+    type: "Cafe",
     coordinates: [10.709116791570953, 122.56795493464733],
-    imageUrl: "/images/food/Cafes/madge atria cafe.jpg",
+    imageUrl: "/images/food/Cafes/madge lapaz cafe.jpg",
   },
   {
     name: "Roberto's",
@@ -223,7 +219,7 @@ export const landmarks: Landmark[] = [
     imageUrl: "/images/food/Cafes/flour bakery.jpg",
   },
   {
-    name: "Madge Cafe",
+    name: "Madge Cafe - Atria",
     type: "Cafe",
     coordinates: [10.707186575535314, 122.54891614533973],
     imageUrl: "/images/food/Cafes/madge atria cafe.jpg",
@@ -389,12 +385,6 @@ export const landmarks: Landmark[] = [
     type: "Church",
     coordinates: [10.824088000928233, 122.60991833106057],
     imageUrl: "/images/places/Churches/st. isidore.jpg",
-  },
-  {
-    name: "Doane Baptist Church",
-    type: "Church",
-    coordinates: [10.702269251099665, 122.56783455811234],
-    imageUrl: "/images/places/Churches/doane church.jpg",
   },
   {
     name: "Santo Tomas de Villanueva Parish - Miagao Church (Archdiocese of Jaro)",

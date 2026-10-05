@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { BookmarkCheck, ChevronDown, Clock, Trash2, Wallet } from "lucide-react"
+import { BookmarkCheck, ChevronDown, Clock, Navigation, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
+import { directionsHref, findLandmarkByName } from "@/lib/places"
 import { cn } from "@/lib/utils"
 
 type SavedRoute = {
@@ -28,8 +29,27 @@ const initialRoutes: SavedRoute[] = [
 export default function SavedRoutesPage() {
   const [routes, setRoutes] = useState(initialRoutes)
   const [expandedRoute, setExpandedRoute] = useState<number | null>(null)
+  const [lastRemoved, setLastRemoved] = useState<{ route: SavedRoute; index: number } | null>(null)
 
-  const removeRoute = (id: number) => setRoutes((prev) => prev.filter((r) => r.id !== id))
+  // The undo banner goes away on its own after a few seconds
+  useEffect(() => {
+    if (!lastRemoved) return
+    const timer = setTimeout(() => setLastRemoved(null), 6000)
+    return () => clearTimeout(timer)
+  }, [lastRemoved])
+
+  const removeRoute = (id: number) => {
+    const index = routes.findIndex((r) => r.id === id)
+    if (index === -1) return
+    setLastRemoved({ route: routes[index], index })
+    setRoutes((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  const undoRemove = () => {
+    if (!lastRemoved) return
+    setRoutes((prev) => [...prev.slice(0, lastRemoved.index), lastRemoved.route, ...prev.slice(lastRemoved.index)])
+    setLastRemoved(null)
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-8 pt-5 lg:pt-8">
@@ -37,6 +57,15 @@ export default function SavedRoutesPage() {
         title="Saved routes"
         description={`${routes.length} ${routes.length === 1 ? "route" : "routes"} bookmarked`}
       />
+
+      {lastRemoved && (
+        <div role="status" className="mb-3 flex items-center justify-between gap-3 rounded-2xl bg-foreground px-4 py-2 text-sm text-background">
+          <span className="min-w-0 truncate">Removed {lastRemoved.route.from} → {lastRemoved.route.to}</span>
+          <button type="button" onClick={undoRemove} className="min-h-10 shrink-0 font-semibold text-brand">
+            Undo
+          </button>
+        </div>
+      )}
 
       {routes.length === 0 ? (
         <div className="flex flex-col items-center rounded-3xl bg-card px-6 py-14 text-center shadow-sm">
@@ -99,14 +128,22 @@ export default function SavedRoutesPage() {
                         <span className="text-muted-foreground">(End)</span>
                       </li>
                     </ol>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
-                      onClick={() => removeRoute(route.id)}
-                    >
-                      <Trash2 /> Remove
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm">
+                        {/* Go straight to directions when the destination is a known landmark */}
+                        <Link href={findLandmarkByName(route.to) ? directionsHref(route.to) : "/dashboard/map"}>
+                          <Navigation /> Directions
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-destructive/30 text-destructive hover:bg-destructive/5 hover:text-destructive"
+                        onClick={() => removeRoute(route.id)}
+                      >
+                        <Trash2 /> Remove
+                      </Button>
+                    </div>
                   </div>
                 )}
               </li>

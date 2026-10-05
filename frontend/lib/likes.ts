@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { findLandmarkByName } from "@/lib/places"
+import type { PlaceSummary } from "@/components/place-card"
+import { findLandmarkByName, toLandmarkSlug } from "@/lib/places"
 
 export type LikedItem = {
   id: string
@@ -60,7 +61,17 @@ function parseLikedItems(raw: string | null): LikedItem[] {
   try {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.map(normalizeItem).filter((item): item is LikedItem => Boolean(item))
+    // Likes match by name, so a name saved twice (e.g. by an older build) should only show once
+    const seen = new Set<string>()
+    return parsed
+      .map(normalizeItem)
+      .filter((item): item is LikedItem => Boolean(item))
+      .filter((item) => {
+        const key = item.name.trim().toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
   } catch {
     return []
   }
@@ -89,6 +100,18 @@ function writeLikedItems(items: LikedItem[]) {
 }
 
 const nameKey = (name: string) => name.trim().toLowerCase()
+
+/** The liked-item record for a place or food card, so every page saves likes the same way. */
+export function likedItemFromPlace(place: PlaceSummary): LikedItem {
+  return {
+    id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
+    name: place.name,
+    category: place.kind,
+    image: place.image,
+    rating: place.rating,
+    label: place.category,
+  }
+}
 
 /**
  * Liked places and food, stored in localStorage and kept in sync across pages and tabs.
@@ -122,11 +145,10 @@ export function useLikedItems() {
     writeLikedItems(next)
   }, [])
 
-  const removeLike = useCallback((id: string) => {
-    const next = readLikedItems().filter((item) => item.id !== id)
-    setLikedItems(next)
-    writeLikedItems(next)
+  const clearLikes = useCallback(() => {
+    setLikedItems([])
+    writeLikedItems([])
   }, [])
 
-  return { likedItems, isLiked, toggleLike, removeLike }
+  return { likedItems, isLiked, toggleLike, clearLikes }
 }
