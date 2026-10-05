@@ -7,11 +7,14 @@ export function CategoryChips({
   options,
   value,
   onChange,
+  counts,
   className,
 }: {
   options: readonly string[]
   value: string
   onChange: (value: string) => void
+  /** Optional number shown after each label, keyed by option */
+  counts?: Record<string, number>
   className?: string
 }) {
   // Tabs move with the arrow keys (only the active chip is in the tab order)
@@ -52,6 +55,11 @@ export function CategoryChips({
             )}
           >
             {option}
+            {counts?.[option] !== undefined && (
+              <span className={cn("ml-1.5 text-xs", active ? "text-primary-foreground/80" : "text-muted-foreground/80")}>
+                {counts[option]}
+              </span>
+            )}
           </button>
         )
       })}
