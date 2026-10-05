@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { BookmarkCheck, ChevronDown, Clock, Navigation, Trash2, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,13 @@ export default function SavedRoutesPage() {
   const [routes, setRoutes] = useState(initialRoutes)
   const [expandedRoute, setExpandedRoute] = useState<number | null>(null)
   const [lastRemoved, setLastRemoved] = useState<{ route: SavedRoute; index: number } | null>(null)
+
+  // The undo banner goes away on its own after a few seconds
+  useEffect(() => {
+    if (!lastRemoved) return
+    const timer = setTimeout(() => setLastRemoved(null), 6000)
+    return () => clearTimeout(timer)
+  }, [lastRemoved])
 
   const removeRoute = (id: number) => {
     const index = routes.findIndex((r) => r.id === id)
