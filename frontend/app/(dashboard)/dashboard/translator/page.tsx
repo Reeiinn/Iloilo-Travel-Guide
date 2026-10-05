@@ -55,7 +55,9 @@ export default function TranslatorPage() {
   const translate = (text: string) => {
     // "Thank you!" and "how much is this?" should still match the phrase list
     const key = text.toLowerCase().replace(/[?!.,]+/g, "").replace(/\s+/g, " ").trim()
-    setOutputText(sampleTranslations[key] ?? `[Translation of "${text}" to ${toLang}]`)
+    setOutputText(
+      sampleTranslations[key] ?? `We don't have "${text.trim()}" yet. Try one of the common phrases below.`,
+    )
   }
 
   const copyOutput = async () => {
