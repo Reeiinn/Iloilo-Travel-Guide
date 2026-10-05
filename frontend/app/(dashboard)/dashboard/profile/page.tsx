@@ -43,7 +43,7 @@ function Section({ title, icon: Icon, children, action }: { title: string; icon:
 }
 
 export default function ProfilePage() {
-  const { likedItems, toggleLike } = useLikedItems()
+  const { likedItems, toggleLike, clearLikes } = useLikedItems()
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([])
   const [savedPreferences, setSavedPreferences] = useState<string[]>([])
   const [loadingPreferences, setLoadingPreferences] = useState(true)
@@ -152,7 +152,21 @@ export default function ProfilePage() {
         )}
       </Section>
 
-      <Section title="Liked places & food" icon={Heart}>
+      <Section
+        title="Liked places & food"
+        icon={Heart}
+        action={
+          likedItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => window.confirm(`Remove all ${likedItems.length} liked places?`) && clearLikes()}
+              className="min-h-10 text-sm font-medium text-muted-foreground hover:text-destructive"
+            >
+              Clear all
+            </button>
+          )
+        }
+      >
         {likedItems.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border px-4 py-8 text-center">
             <Heart className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />

@@ -145,5 +145,10 @@ export function useLikedItems() {
     writeLikedItems(next)
   }, [])
 
-  return { likedItems, isLiked, toggleLike }
+  const clearLikes = useCallback(() => {
+    setLikedItems([])
+    writeLikedItems([])
+  }, [])
+
+  return { likedItems, isLiked, toggleLike, clearLikes }
 }
