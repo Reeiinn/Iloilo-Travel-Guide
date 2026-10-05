@@ -48,6 +48,10 @@ export default function TranslatorPage() {
     setOutputText(inputText)
   }
 
+  // Picking the other side's language swaps the pair instead of translating a language into itself
+  const chooseFrom = (lang: string) => (lang === toLang ? swapLanguages() : setFromLang(lang))
+  const chooseTo = (lang: string) => (lang === fromLang ? swapLanguages() : setToLang(lang))
+
   const translate = (text: string) => {
     // "Thank you!" and "how much is this?" should still match the phrase list
     const key = text.toLowerCase().replace(/[?!.,]+/g, "").replace(/\s+/g, " ").trim()
@@ -83,7 +87,7 @@ export default function TranslatorPage() {
       <div className="rounded-3xl bg-card p-4 shadow-sm sm:p-5">
         <div className="mb-4 flex items-center gap-2">
           <label htmlFor="from-lang" className="sr-only">From language</label>
-          <select id="from-lang" value={fromLang} onChange={(e) => setFromLang(e.target.value)} className={selectClass}>
+          <select id="from-lang" value={fromLang} onChange={(e) => chooseFrom(e.target.value)} className={selectClass}>
             {languages.map((lang) => (
               <option key={lang}>{lang}</option>
             ))}
@@ -92,7 +96,7 @@ export default function TranslatorPage() {
             <ArrowRightLeft />
           </Button>
           <label htmlFor="to-lang" className="sr-only">To language</label>
-          <select id="to-lang" value={toLang} onChange={(e) => setToLang(e.target.value)} className={selectClass}>
+          <select id="to-lang" value={toLang} onChange={(e) => chooseTo(e.target.value)} className={selectClass}>
             {languages.map((lang) => (
               <option key={lang}>{lang}</option>
             ))}
