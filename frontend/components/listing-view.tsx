@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
 import { Search, SearchX, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CategoryChips } from "@/components/category-chips"
@@ -35,7 +35,6 @@ export function ListingView({
   items: ListingItem[]
 }) {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const pathname = usePathname()
   const { isLiked, toggleLike } = useLikedItems()
   const [activeCategory, setActiveCategory] = useState("All")
@@ -52,7 +51,8 @@ export function ListingView({
   const selectCategory = (category: string) => {
     setActiveCategory(category)
     const slug = Object.keys(queryCategories).find((key) => queryCategories[key] === category)
-    router.replace(slug && category !== "All" ? `${pathname}?category=${slug}` : pathname, { scroll: false })
+    // Native replaceState updates useSearchParams without a server round trip
+    window.history.replaceState(null, "", slug && category !== "All" ? `${pathname}?category=${slug}` : pathname)
   }
 
   const filtered = useMemo(() => {
