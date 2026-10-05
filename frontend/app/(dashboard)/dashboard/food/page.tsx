@@ -52,7 +52,7 @@ export default function FoodPage() {
     <Suspense fallback={null}>
       <ListingView
         title="Food & Cafes"
-        countLabel={(count) => `${count} spots to try`}
+        countLabel={(count) => `${count} ${count === 1 ? "spot" : "spots"} to try`}
         searchPlaceholder="Search food spots"
         categories={categories}
         queryCategories={queryCategories}

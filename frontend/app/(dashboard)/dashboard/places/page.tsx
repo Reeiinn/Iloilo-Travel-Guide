@@ -48,7 +48,7 @@ export default function PlacesPage() {
     <Suspense fallback={null}>
       <ListingView
         title="Places"
-        countLabel={(count) => `${count} destinations to explore`}
+        countLabel={(count) => `${count} ${count === 1 ? "destination" : "destinations"} to explore`}
         searchPlaceholder="Search places"
         categories={categories}
         queryCategories={queryCategories}
