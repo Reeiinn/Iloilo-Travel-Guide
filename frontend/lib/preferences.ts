@@ -1,4 +1,5 @@
 const PREFERENCES_STORAGE_KEY = "ilocate-user-preferences"
+const ONBOARDED_STORAGE_KEY = "ilocate-onboarded"
 
 export function getUserPreferences(): string[] {
   if (typeof window === "undefined") return []
@@ -6,7 +7,8 @@ export function getUserPreferences(): string[] {
   try {
     const saved = window.localStorage.getItem(PREFERENCES_STORAGE_KEY)
     const parsed: unknown = saved ? JSON.parse(saved) : []
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []
+    if (!Array.isArray(parsed)) return []
+    return [...new Set(parsed.filter((item): item is string => typeof item === "string"))]
   } catch {
     return []
   }
@@ -14,12 +16,11 @@ export function getUserPreferences(): string[] {
 
 export function saveUserPreferences(preferences: string[]): void {
   try {
-    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
+    window.localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify([...new Set(preferences)]))
   } catch {
     // Keep the app usable when browser storage is unavailable.
   }
 }
-const ONBOARDED_STORAGE_KEY = "ilocate-onboarded"
 
 // First launch shows the welcome/interests screen; after that the app opens straight to Home
 export function hasCompletedOnboarding(): boolean {

@@ -132,6 +132,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-dvh flex-col bg-secondary">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to content
+      </a>
       <header
         className={cn(
           "sticky top-0 z-40 border-b border-border/70 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md",
@@ -170,7 +176,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      <main className={cn("flex-1", isMapPage ? "pb-0" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0")}>
+      <main id="main-content" tabIndex={-1} className={cn("flex-1 focus:outline-none", isMapPage ? "pb-0" : "pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0")}>
         {children}
       </main>
 

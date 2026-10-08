@@ -4,32 +4,11 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  Building2,
-  Bus,
-  Check,
-  Church,
-  Coffee,
-  Landmark,
-  Languages,
-  Loader2,
-  ShoppingBag,
-  UtensilsCrossed,
-  Waves,
-} from "lucide-react"
+import { Bus, Check, Languages, Loader2, UtensilsCrossed } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { INTEREST_CATEGORIES } from "@/lib/interests"
 import { markOnboardingComplete, saveUserPreferences } from "@/lib/preferences"
 import { cn } from "@/lib/utils"
-
-const categories = [
-  { id: "coffee-shops", label: "Coffee Shops", icon: Coffee },
-  { id: "restaurants", label: "Restaurants", icon: UtensilsCrossed },
-  { id: "beaches", label: "Beaches", icon: Waves },
-  { id: "churches", label: "Churches", icon: Church },
-  { id: "malls", label: "Malls", icon: ShoppingBag },
-  { id: "city-landmarks", label: "Landmarks", icon: Landmark },
-  { id: "museums", label: "Museums", icon: Building2 },
-]
 
 const highlights = [
   { label: "Jeepney routes", icon: Bus },
@@ -47,6 +26,8 @@ export default function WelcomePage() {
   const [selected, setSelected] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const allSelected = selected.length === INTEREST_CATEGORIES.length
 
   const toggleCategory = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]))
@@ -99,11 +80,20 @@ export default function WelcomePage() {
             ))}
           </ul>
 
-          <h2 className="mt-6 text-lg font-bold text-foreground">What are you into?</h2>
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-foreground">What are you into?</h2>
+            <button
+              type="button"
+              onClick={() => setSelected(allSelected ? [] : INTEREST_CATEGORIES.map((cat) => cat.id))}
+              className="min-h-10 shrink-0 text-sm font-medium text-primary"
+            >
+              {allSelected ? "Clear all" : "Select all"}
+            </button>
+          </div>
           <p className="mt-0.5 text-sm text-muted-foreground">Pick a few and we&apos;ll tailor your Home feed.</p>
 
           <div className="mt-3 grid grid-cols-2 gap-2">
-            {categories.map((cat) => {
+            {INTEREST_CATEGORIES.map((cat) => {
               const isSelected = selected.includes(cat.id)
               return (
                 <button

@@ -33,7 +33,7 @@ function placeFilters(name: string, type: string) {
 
 const allPlaces: ListingItem[] = landmarks
   .filter((landmark) => !isFoodType(landmark.type))
-  .map((landmark) => ({
+  .map((landmark): ListingItem => ({
     name: landmark.name,
     image: getPlaceImage(landmark.type, landmark.imageUrl),
     category: landmark.type,
@@ -41,13 +41,14 @@ const allPlaces: ListingItem[] = landmarks
     kind: "Place",
     filters: placeFilters(landmark.name, landmark.type),
   }))
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 export default function PlacesPage() {
   return (
     <Suspense fallback={null}>
       <ListingView
         title="Places"
-        countLabel={(count) => `${count} destinations to explore`}
+        countLabel={(count) => `${count} ${count === 1 ? "destination" : "destinations"} to explore`}
         searchPlaceholder="Search places"
         categories={categories}
         queryCategories={queryCategories}

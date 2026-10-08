@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, CircleHelp, Users } from "lucide-react"
+import { Bug, ChevronRight, CircleHelp, ExternalLink, Users } from "lucide-react"
 import { AboutUsModal } from "@/components/about-us-modal"
 import { FaqList } from "@/components/faq-list"
 import { PageHeader } from "@/components/page-header"
@@ -31,6 +31,22 @@ export default function HelpPage() {
         </span>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </button>
+
+      <a
+        href="https://github.com/Reeiinn/Iloilo-Travel-Guide/issues"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex min-h-16 w-full items-center gap-3 rounded-3xl bg-card px-4 text-left shadow-sm transition-colors hover:bg-muted/60"
+      >
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Bug className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-foreground">Report a problem</span>
+          <span className="block text-xs text-muted-foreground">Wrong route, missing place, or a bug</span>
+        </span>
+        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+      </a>
 
       <p className="flex items-center justify-center gap-1.5 pt-2 text-xs text-muted-foreground">
         <CircleHelp className="h-3.5 w-3.5" /> iLOcate · Explore Iloilo Now!

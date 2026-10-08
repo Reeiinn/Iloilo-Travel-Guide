@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: 'iLOcate - Explore Iloilo Now!',
   description: 'Discover the best places, food, events, and experiences in Iloilo City, Philippines. Your ultimate tourism discovery platform.',
   applicationName: 'iLOcate',
+  keywords: ['Iloilo', 'Iloilo City', 'jeepney routes', 'PUJ', 'Philippines travel', 'Ilonggo', 'things to do in Iloilo'],
+  openGraph: {
+    title: 'iLOcate - Explore Iloilo Now!',
+    description: 'Jeepney routes, directions, places and food in Iloilo City, Philippines.',
+    siteName: 'iLOcate',
+    locale: 'en_PH',
+    type: 'website',
+  },
   appleWebApp: {
     capable: true,
     title: 'iLOcate',

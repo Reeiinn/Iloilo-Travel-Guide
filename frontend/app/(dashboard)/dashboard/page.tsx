@@ -9,9 +9,9 @@ import { landmarks } from "@ilocate/backend/landmarks"
 import { loadAndDecodeRoutes, type DecodedRoute } from "@ilocate/backend/routes"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
 import { PlaceSheet } from "@/components/place-sheet"
-import { useLikedItems } from "@/lib/likes"
+import { likedItemFromPlace, useLikedItems } from "@/lib/likes"
 import { getUserPreferences } from "@/lib/preferences"
-import { getPlaceImage, getRating, isFoodType, toLandmarkSlug } from "@/lib/places"
+import { getPlaceImage, getRating, isFoodType } from "@/lib/places"
 
 const MapComponent = dynamic(() => import("@/components/map-leaflet"), {
   ssr: false,
@@ -64,6 +64,7 @@ function orderByStableHash<T extends { name: string; type: string }>(items: T[])
 
 function greeting() {
   const hour = new Date().getHours()
+  if (hour < 4) return "Maayong gab-i"
   if (hour < 12) return "Maayong aga"
   if (hour < 18) return "Maayong hapon"
   return "Maayong gab-i"
@@ -108,7 +109,8 @@ export default function DashboardPage() {
   const recommended = useMemo<PlaceSummary[]>(() => {
     const selectedTypes = new Set(preferences.flatMap((pref) => preferenceToLandmarkTypes[pref] ?? []))
     const preferred = landmarks.filter((landmark) => selectedTypes.has(landmark.type))
-    const source = preferred.length > 0 ? preferred : orderByStableHash(landmarks)
+    // Shuffle preferred picks too, or the first interest in file order fills all 12 slots
+    const source = orderByStableHash(preferred.length > 0 ? preferred : landmarks)
     return source.slice(0, 12).map((landmark) => ({
       name: landmark.name,
       image: getPlaceImage(landmark.type, landmark.imageUrl),
@@ -118,15 +120,7 @@ export default function DashboardPage() {
     }))
   }, [preferences])
 
-  const likePlace = (place: PlaceSummary) =>
-    toggleLike({
-      id: `${place.kind.toLowerCase()}-${toLandmarkSlug(place.name)}`,
-      name: place.name,
-      category: place.kind,
-      image: place.image,
-      rating: place.rating,
-      label: place.category,
-    })
+  const likePlace = (place: PlaceSummary) => toggleLike(likedItemFromPlace(place))
 
   const firstName = "Explorer"
   const foodCount = landmarks.filter((l) => isFoodType(l.type)).length
