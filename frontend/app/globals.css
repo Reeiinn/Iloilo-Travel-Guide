@@ -107,26 +107,158 @@
   }
 }
 
-/* Leaflet locate control styles */
-.leaflet-control-locate {
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+/* ---------- Map (Leaflet) theme ---------- */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: #eef2f3;
 }
 
-.leaflet-control-locate-button {
-  display: block;
+/* Floating controls: rounded, borderless, soft shadow */
+.leaflet-bar,
+.leaflet-touch .leaflet-bar {
+  border: none;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(20, 32, 31, 0.14), 0 1px 3px rgba(20, 32, 31, 0.08);
+}
+
+.leaflet-bar a,
+.leaflet-touch .leaflet-bar a {
   width: 40px;
   height: 40px;
   line-height: 40px;
-  text-align: center;
-  text-decoration: none;
-  color: #333;
-  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground);
+  background-color: var(--background);
+  border-bottom: 1px solid var(--border);
+  font-size: 20px;
+  font-weight: 400;
+  transition: background-color 150ms, color 150ms;
 }
 
-.leaflet-control-locate-button:hover {
-  background-color: #f4f4f4;
+.leaflet-bar a:last-child {
+  border-bottom: none;
+}
+
+.leaflet-bar a:hover,
+.leaflet-bar a:focus-visible {
+  background-color: var(--secondary);
+  color: var(--primary);
+}
+
+.leaflet-bar a.leaflet-disabled {
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
+.leaflet-control-locate-button {
+  color: var(--primary) !important;
+}
+
+.leaflet-right .leaflet-control {
+  margin-right: 14px;
+}
+
+.leaflet-bottom .leaflet-control {
+  margin-bottom: 14px;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+  border-top-left-radius: 8px;
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(4px);
+  color: var(--muted-foreground);
+}
+
+.leaflet-bottom .leaflet-control-attribution {
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+/* Popups: card-like */
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(20, 32, 31, 0.18);
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  line-height: 1.35;
+}
+
+.leaflet-popup-tip {
+  box-shadow: none;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  line-height: 20px;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+}
+
+.map-popup-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  padding-right: 14px;
+}
+
+.map-popup-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+/* Markers */
+.map-pin {
+  background: none;
+  border: none;
+}
+
+.map-pin svg {
+  display: block;
+  filter: drop-shadow(0 3px 4px rgba(20, 32, 31, 0.3));
+  transition: transform 150ms ease-out;
+  transform-origin: 50% 100%;
+}
+
+.map-pin:hover svg {
+  transform: scale(1.1);
+}
+
+.map-origin-dot {
+  background: none;
+  border: none;
+}
+
+.map-origin-dot span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #fff;
+  border: 5px solid var(--dot-color);
+  box-shadow: 0 2px 6px rgba(20, 32, 31, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-pin svg {
+    transition: none;
+  }
 }
 
 /* Preview maps that link to the full map don’t need zoom buttons */
@@ -134,16 +266,21 @@
   display: none;
 }
 
-/* Full-screen phone map: pinch to zoom, and lift the locate button above the bottom sheet */
+/* Full-screen phone map: pinch to zoom, and lift the bottom controls above the bottom sheet */
 @media (max-width: 1023px) {
   .map-mobile-chrome .leaflet-control-zoom {
     display: none;
   }
-  .map-mobile-chrome .leaflet-top.leaflet-right {
-    top: auto;
-    bottom: calc(var(--map-bottom-offset, 0px) + 20px);
-  }
   .map-mobile-chrome .leaflet-bottom {
     bottom: var(--map-bottom-offset, 0px);
   }
+  /* Keep the map credits visible above the navigation trip bar */
+  .map-mobile-chrome.map-navigating .leaflet-bottom {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Turn-by-turn navigation: the overlay's Re-center button replaces the locate control */
+.map-navigating .leaflet-control-locate {
+  display: none;
 }

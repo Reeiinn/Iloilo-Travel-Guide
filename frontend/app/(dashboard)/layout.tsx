@@ -3,17 +3,21 @@
 import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   BookmarkCheck,
   Building2,
   CircleHelp,
   Home,
   Languages,
+  LogIn,
+  LogOut,
   Map,
   User,
+  UserPlus,
   Utensils,
 } from "lucide-react"
+import { useAuth } from "@/lib/auth"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,22 +54,41 @@ const toolLinks = [
 ]
 
 function UserMenu() {
+  const { user, logOut } = useAuth()
+  const router = useRouter()
+  const displayName = user?.name ?? "Guest explorer"
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         className="flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        aria-label="Explorer menu"
+        aria-label={user ? `Account menu for ${user.name}` : "Account menu"}
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-          E
+          {user ? displayName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
         </span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 rounded-xl">
         <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="truncate text-sm font-semibold">iLOcate Explorer</span>
-          <span className="truncate text-xs font-normal text-muted-foreground">Saved on this device</span>
+          <span className="truncate text-sm font-semibold">{displayName}</span>
+          <span className="truncate text-xs font-normal text-muted-foreground">{user ? user.email : "Browsing as guest"}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {!user && (
+          <>
+            <DropdownMenuItem asChild className="min-h-10">
+              <Link href="/login">
+                <LogIn className="h-4 w-4" /> Sign in
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="min-h-10">
+              <Link href="/signup">
+                <UserPlus className="h-4 w-4" /> Create account
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem asChild className="min-h-10">
           <Link href="/dashboard/profile">
             <User className="h-4 w-4" /> Profile
@@ -83,6 +106,20 @@ function UserMenu() {
             <CircleHelp className="h-4 w-4" /> Help & FAQs
           </Link>
         </DropdownMenuItem>
+        {user && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="min-h-10 text-destructive focus:text-destructive"
+              onSelect={() => {
+                logOut()
+                router.push("/dashboard")
+              }}
+            >
+              <LogOut className="h-4 w-4 text-destructive" /> Log out
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

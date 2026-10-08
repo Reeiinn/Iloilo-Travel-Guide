@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   BookmarkCheck,
   Check,
@@ -13,12 +14,25 @@ import {
   Landmark,
   Languages,
   Loader2,
+  LogIn,
+  LogOut,
   ShoppingBag,
   Sparkles,
+  UserPlus,
+  UserRound,
   UtensilsCrossed,
   Waves,
 } from "lucide-react"
+import { useAuth } from "@/lib/auth"
 import { getUserPreferences, saveUserPreferences } from "@/lib/preferences"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { PlaceCard, type PlaceSummary } from "@/components/place-card"
@@ -73,6 +87,9 @@ export default function ProfilePage() {
   const [loadingPreferences, setLoadingPreferences] = useState(true)
   const [savingPreferences, setSavingPreferences] = useState(false)
   const [selected, setSelected] = useState<LikedItem | null>(null)
+  const [confirmLogOut, setConfirmLogOut] = useState(false)
+  const { user, ready: authReady, logOut } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     const preferences = getUserPreferences()
@@ -100,19 +117,29 @@ export default function ProfilePage() {
     }
   }
 
-  const userName = "iLOcate Explorer"
+  const userName = user?.name ?? "Guest explorer"
   const selectedSummary = selected ? toSummary(selected) : null
+
+  const handleLogOut = () => {
+    logOut()
+    setConfirmLogOut(false)
+    router.push("/dashboard")
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pb-8 pt-5 lg:pt-8">
       {/* Identity */}
       <section className="flex items-center gap-4 rounded-3xl bg-gradient-to-br from-primary to-[#0E6F79] p-5 text-primary-foreground shadow-sm">
         <Avatar className="h-16 w-16 border-2 border-white/40">
-          <AvatarFallback className="bg-white/20 text-xl font-bold text-white">{userName.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="bg-white/20 text-xl font-bold text-white">
+            {user ? userName.charAt(0).toUpperCase() : <UserRound className="h-7 w-7" />}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold">{userName}</h1>
-          <p className="truncate text-sm text-white/80">Your interests and likes are saved on this device</p>
+          <h1 className="truncate text-xl font-bold">{authReady ? userName : " "}</h1>
+          <p className="truncate text-sm text-white/80">
+            {user ? user.email : "Sign in to keep your likes under your own profile"}
+          </p>
           <div className="mt-2 flex gap-4 text-sm">
             <span>
               <strong className="font-bold">{likedItems.length}</strong> <span className="text-white/80">liked</span>
@@ -123,6 +150,25 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {authReady && !user && (
+        <section className="rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-bold text-foreground">You&apos;re browsing as a guest</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Create an account or sign in to get your own profile.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:flex">
+            <Button asChild>
+              <Link href="/signup?next=/dashboard/profile">
+                <UserPlus /> Create account
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/login?next=/dashboard/profile">
+                <LogIn /> Sign in
+              </Link>
+            </Button>
+          </div>
+        </section>
+      )}
 
       {/* Tools (not in the phone tab bar) */}
       <nav aria-label="Tools" className="overflow-hidden rounded-3xl bg-card shadow-sm">
@@ -207,6 +253,39 @@ export default function ProfilePage() {
           </div>
         )}
       </Section>
+
+      {user && (
+        <section className="rounded-3xl bg-card p-4 shadow-sm sm:p-5">
+          <h2 className="text-base font-bold text-foreground">Account</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Signed in as <span className="font-medium text-foreground">{user.email}</span>
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setConfirmLogOut(true)}
+            className="mt-4 w-full border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
+          >
+            <LogOut /> Log out
+          </Button>
+        </section>
+      )}
+
+      <Dialog open={confirmLogOut} onOpenChange={setConfirmLogOut}>
+        <DialogContent className="rounded-3xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Log out of iLOcate?</DialogTitle>
+            <DialogDescription>You can keep browsing as a guest and sign back in anytime.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmLogOut(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleLogOut}>
+              <LogOut /> Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <PlaceSheet
         place={selectedSummary}

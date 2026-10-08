@@ -6,6 +6,39 @@ import "leaflet/dist/leaflet.css"
 import { Landmark } from "@ilocate/backend/landmarks"
 import type { DecodedRoute } from "@ilocate/backend/routes"
 
+const PIN_COLORS = {
+  landmark: "#0B8080",
+  focused: "#2563EB",
+  selected: "#E53E3E",
+  origin: "#10B981",
+  destination: "#E53E3E",
+  dropped: "#F59E0B",
+} as const
+
+// Teardrop pin drawn as inline SVG so it stays crisp at any zoom and needs no external images
+function createPinIcon(color: string, size: "md" | "lg" = "md") {
+  const [w, h] = size === "lg" ? [36, 46] : [28, 36]
+  return L.divIcon({
+    className: "map-pin",
+    html: `<svg width="${w}" height="${h}" viewBox="0 0 28 36" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 35c-.6 0-1.1-.3-1.4-.8C9.9 29.9 2 22.4 2 14a12 12 0 0 1 24 0c0 8.4-7.9 15.9-10.6 20.2-.3.5-.8.8-1.4.8Z" fill="${color}" stroke="#fff" stroke-width="2"/>
+      <circle cx="14" cy="14" r="4.5" fill="#fff"/>
+    </svg>`,
+    iconSize: [w, h],
+    iconAnchor: [w / 2, h - 1],
+    popupAnchor: [0, -h + 6],
+  })
+}
+
+// Round start marker: reads as "you start here" rather than another place pin
+const originIcon = L.divIcon({
+  className: "map-origin-dot",
+  html: `<span style="--dot-color:${PIN_COLORS.origin}"></span>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
+})
+
 const currentLocationIcon = L.icon({
   iconUrl: "/images/icons/MapIconLight.svg",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
@@ -16,6 +49,13 @@ const currentLocationIcon = L.icon({
   shadowAnchor: [14, 24],
 })
 
+const LOCATE_ICON_SVG =
+  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>'
+
+function popupHtml(title: string, subtitle?: string) {
+  return `<div class="map-popup-title">${title}</div>${subtitle ? `<div class="map-popup-sub">${subtitle}</div>` : ""}`
+}
+
 export interface DirectionsRoute {
   coordinates: [number, number][]
   distance: number
@@ -25,6 +65,7 @@ export interface DirectionsRoute {
     distance: number
     duration: number
     coordinates: [number, number][]
+    maneuver?: { type: string; modifier?: string }
   }>
 }
 
@@ -56,8 +97,13 @@ interface MapComponentProps {
   originMarker?: [number, number] | null
   destinationMarker?: [number, number] | null
   pinDropMode?: boolean
+  /** Turn-by-turn mode: the live position drives the location marker and (when following) the camera */
+  navigating?: boolean
+  navigationPosition?: [number, number] | null
+  followNavigation?: boolean
   onPinDropped?: (coords: [number, number]) => void
   onRouteSelect?: (routeId: number | string) => void
+  onUserPan?: () => void
 }
 
 
@@ -91,8 +137,12 @@ export default function MapLeaflet({
   originMarker = null,
   destinationMarker = null,
   pinDropMode = false,
+  navigating = false,
+  navigationPosition = null,
+  followNavigation = false,
   onPinDropped,
   onRouteSelect,
+  onUserPan,
 }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
@@ -100,7 +150,7 @@ export default function MapLeaflet({
   const landmarkMarkersRef = useRef<Map<string, L.Marker>>(new Map())
   const routePolylinesRef = useRef<L.Polyline[]>([])
   const hasFittedAllRoutesRef = useRef(false)
-  const directionsPolylineRef = useRef<L.Polyline | null>(null)
+  const directionsPolylineRef = useRef<L.LayerGroup | null>(null)
   const originMarkerRef = useRef<L.Marker | null>(null)
   const destinationMarkerRef = useRef<L.Marker | null>(null)
   const pinDropMarkerRef = useRef<L.Marker | null>(null)
@@ -117,6 +167,8 @@ export default function MapLeaflet({
   onRouteSelectRef.current = onRouteSelect
   const onPinDroppedRef = useRef(onPinDropped)
   onPinDroppedRef.current = onPinDropped
+  const onUserPanRef = useRef(onUserPan)
+  onUserPanRef.current = onUserPan
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -136,7 +188,7 @@ export default function MapLeaflet({
           currentLocationMarkerRef.current = L.marker(coords, {
             icon: currentLocationIcon,
           })
-            .bindPopup("You are here")
+            .bindPopup(popupHtml("You are here"))
             .addTo(map.current)
         }
       },
@@ -167,7 +219,8 @@ export default function MapLeaflet({
     if (!mapContainer.current || map.current) return
 
     // Initialize map
-    map.current = L.map(mapContainer.current).setView(center, zoom)
+    map.current = L.map(mapContainer.current, { zoomControl: false }).setView(center, zoom)
+    L.control.zoom({ position: "bottomright" }).addTo(map.current)
     let removeClickToggle: (() => void) | null = null
 
     if (requireClickToZoom) {
@@ -189,25 +242,23 @@ export default function MapLeaflet({
       removeClickToggle = () => container.removeEventListener("click", handleContainerClick)
     }
 
-    // Add OpenStreetMap tiles (CARTO basemaps now return "API KEY REQUIRED" tiles)
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    // Esri Light Gray Canvas: a quiet base so route colors and pins stand out.
+    // (CARTO basemaps now return "API KEY REQUIRED" tiles.) Labels are a separate layer on top.
+    const esriTiles = "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas"
+    L.tileLayer(`${esriTiles}/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`, {
+      attribution: 'Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+      maxNativeZoom: 16,
+      maxZoom: 19,
+    }).addTo(map.current)
+    L.tileLayer(`${esriTiles}/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}`, {
+      maxNativeZoom: 16,
       maxZoom: 19,
     }).addTo(map.current)
 
     // Center marker
     if (showCenterMarker) {
-      L.marker(center, {
-        icon: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        }),
-      })
-        .bindPopup("Iloilo City Center")
+      L.marker(center, { icon: createPinIcon(PIN_COLORS.landmark) })
+        .bindPopup(popupHtml("Iloilo City Center"))
         .addTo(map.current)
     }
 
@@ -219,7 +270,7 @@ export default function MapLeaflet({
     // Add locate control button
     const LocateControl = L.Control.extend({
       options: {
-        position: 'topright'
+        position: 'bottomright'
       },
 
       onAdd: function (map: L.Map) {
@@ -227,7 +278,9 @@ export default function MapLeaflet({
         const button = L.DomUtil.create('a', 'leaflet-control-locate-button', container)
         button.href = '#'
         button.title = 'Show my location'
-        button.innerHTML = '📍'
+        button.setAttribute('role', 'button')
+        button.setAttribute('aria-label', 'Show my location')
+        button.innerHTML = LOCATE_ICON_SVG
 
         L.DomEvent.on(button, 'click', function (e) {
           L.DomEvent.stopPropagation(e)
@@ -338,20 +391,12 @@ export default function MapLeaflet({
         const isFocused = focusedLandmarkNames.includes(landmark.name)
         const isSelected = selectedLandmarkName === landmark.name
         const marker = L.marker(landmark.coordinates, {
-          icon: L.icon({
-            iconUrl: isSelected
-              ? "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png"
-              : isFocused
-                ? "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png"
-                : "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-            shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41],
-          }),
+          icon: isSelected
+            ? createPinIcon(PIN_COLORS.selected, "lg")
+            : createPinIcon(isFocused ? PIN_COLORS.focused : PIN_COLORS.landmark),
+          zIndexOffset: isSelected ? 1000 : 0,
         })
-          .bindPopup(`<strong>${landmark.name}</strong><br/>${landmark.type}`)
+          .bindPopup(popupHtml(landmark.name, landmark.type))
           .addTo(mapInstance)
 
         markersRef.current.push(marker)
@@ -399,6 +444,17 @@ export default function MapLeaflet({
         routeVariants.forEach(({ direction, coords }) => {
           if (coords.length < 2) return
 
+          // White casing lifts the selected route off the basemap and the other routes
+          if (isSelected) {
+            const casing = L.polyline(coords, {
+              color: "#ffffff",
+              weight: 10,
+              opacity: 0.9,
+              interactive: false,
+            }).addTo(mapInstance)
+            routePolylinesRef.current.push(casing)
+          }
+
           const routePolyline = L.polyline(coords, {
             color: decodedRoute.routeColor || "hsl(var(--color-primary))",
             weight: isSelected ? 6 : 4,
@@ -406,7 +462,7 @@ export default function MapLeaflet({
             dashArray: direction === "returning" ? "10, 6" : undefined,
           })
             .bindPopup(
-              `<strong>${decodedRoute.routeNumber} - ${decodedRoute.routeName}</strong><br/>${direction === "goingTo" ? "Going to" : "Returning"}`
+              popupHtml(`${decodedRoute.routeNumber} · ${decodedRoute.routeName}`, direction === "goingTo" ? "Going to" : "Returning")
             )
             .on("click", () => {
               onRouteSelectRef.current?.(decodedRoute.id)
@@ -468,26 +524,42 @@ export default function MapLeaflet({
     if (!map.current || !currentLocation) return
     const mapInstance = map.current
 
-    // Remove existing current location marker
-    if (currentLocationMarkerRef.current) {
-      try {
-        currentLocationMarkerRef.current.closePopup()
-      } catch {
-        // noop
-      }
-
-      if (mapInstance.hasLayer(currentLocationMarkerRef.current)) {
-        mapInstance.removeLayer(currentLocationMarkerRef.current)
-      }
+    // Move the existing marker (live navigation updates about once a second)
+    const existing = currentLocationMarkerRef.current
+    if (existing && mapInstance.hasLayer(existing)) {
+      existing.setLatLng(currentLocation)
+      return
     }
 
-    // Add new current location marker
     currentLocationMarkerRef.current = L.marker(currentLocation, {
       icon: currentLocationIcon,
+      zIndexOffset: 2000,
     })
-      .bindPopup("You are here")
+      .bindPopup(popupHtml("You are here"))
       .addTo(mapInstance)
   }, [currentLocation])
+
+  // Live navigation: move the location marker and keep the camera on the traveler
+  useEffect(() => {
+    if (!navigating || !navigationPosition || !isValidCoordinatePair(navigationPosition)) return
+    setCurrentLocation(navigationPosition)
+
+    if (followNavigation && map.current) {
+      // 16 is the basemap's sharpest zoom; beyond it tiles are upscaled and labels blur
+      map.current.setView(navigationPosition, Math.max(map.current.getZoom(), 16), { animate: true })
+    }
+  }, [navigating, navigationPosition, followNavigation])
+
+  // Dragging the map during navigation stops the camera from following
+  useEffect(() => {
+    if (!map.current || !navigating) return
+    const mapInstance = map.current
+    const handleDragStart = () => onUserPanRef.current?.()
+    mapInstance.on("dragstart", handleDragStart)
+    return () => {
+      mapInstance.off("dragstart", handleDragStart)
+    }
+  }, [navigating])
 
   // Handle OSRM directions route
   useEffect(() => {
@@ -519,33 +591,18 @@ export default function MapLeaflet({
 
     // Add origin marker
     if (originMarker && isValidCoordinatePair(originMarker)) {
-      originMarkerRef.current = L.marker(originMarker, {
-        icon: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        }),
-      })
-        .bindPopup("<strong>Start</strong>")
+      originMarkerRef.current = L.marker(originMarker, { icon: originIcon })
+        .bindPopup(popupHtml("Start"))
         .addTo(mapInstance)
     }
 
     // Add destination marker
     if (destinationMarker && isValidCoordinatePair(destinationMarker)) {
       destinationMarkerRef.current = L.marker(destinationMarker, {
-        icon: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        }),
+        icon: createPinIcon(PIN_COLORS.destination, "lg"),
+        zIndexOffset: 1000,
       })
-        .bindPopup("<strong>Destination</strong>")
+        .bindPopup(popupHtml("Destination"))
         .addTo(mapInstance)
     }
 
@@ -554,19 +611,18 @@ export default function MapLeaflet({
       const validCoords = directionsRoute.coordinates.filter((coords) => isValidCoordinatePair(coords))
 
       if (validCoords.length >= 2) {
-        directionsPolylineRef.current = L.polyline(validCoords, {
-          color: "#2563eb",
-          weight: 5,
-          opacity: 0.9,
-        })
-          .addTo(mapInstance)
+        directionsPolylineRef.current = L.layerGroup([
+          L.polyline(validCoords, { color: "#ffffff", weight: 10, opacity: 0.95, interactive: false }),
+          L.polyline(validCoords, { color: "#2563eb", weight: 6, opacity: 1 }),
+        ]).addTo(mapInstance)
 
-        // Fit bounds to show route
-        const bounds = L.latLngBounds(validCoords)
-        mapInstance.fitBounds(bounds, { padding: [50, 50] })
+        // Show the whole route, except while navigating (the camera follows the traveler then)
+        if (!navigating) {
+          mapInstance.fitBounds(L.latLngBounds(validCoords), { padding: [50, 50] })
+        }
       }
     }
-  }, [directionsRoute, originMarker, destinationMarker])
+  }, [directionsRoute, originMarker, destinationMarker, navigating])
 
   // Handle pin drop mode — lets users click/drag to place a custom destination pin
   useEffect(() => {
@@ -601,16 +657,10 @@ export default function MapLeaflet({
       // Place a new draggable orange pin
       const marker = L.marker(coords, {
         draggable: true,
-        icon: L.icon({
-          iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
-          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
-          shadowSize: [41, 41],
-        }),
+        icon: createPinIcon(PIN_COLORS.dropped, "lg"),
+        zIndexOffset: 1000,
       })
-        .bindPopup("<strong>📍 Your Destination</strong><br/><small>Drag to adjust position</small>")
+        .bindPopup(popupHtml("Your destination", "Drag to adjust position"))
         .addTo(mapInstance)
         .openPopup()
 

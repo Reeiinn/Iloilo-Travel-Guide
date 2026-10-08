@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Building2,
@@ -152,7 +153,12 @@ export default function WelcomePage() {
         >
           Skip for now
         </button>
-        <p className="text-center text-xs text-muted-foreground">You can change these anytime in Profile.</p>
+        <p className="text-center text-xs text-muted-foreground">
+          You can change these anytime in Profile. Have an account?{" "}
+          <Link href="/login" className="font-semibold text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
       </div>
     </>
   )

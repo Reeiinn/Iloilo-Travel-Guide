@@ -55,6 +55,7 @@ export interface DirectionsResult {
       distance: number;
       duration: number;
       coordinates: [number, number][]; // [lat, lng] pairs
+      maneuver: { type: string; modifier?: string };
     }>;
   };
 }
@@ -247,6 +248,7 @@ export async function getDirections(
         distance: step.distance,
         duration: step.duration,
         coordinates: decodePolyline(step.geometry),
+        maneuver: { type: step.maneuver.type, modifier: step.maneuver.modifier },
       }))
     );
 
@@ -316,6 +318,7 @@ export async function getRouteWithWaypoints(
         distance: step.distance,
         duration: step.duration,
         coordinates: decodePolyline(step.geometry),
+        maneuver: { type: step.maneuver.type, modifier: step.maneuver.modifier },
       }))
     );
 

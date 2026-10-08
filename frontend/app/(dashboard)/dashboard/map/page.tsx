@@ -26,6 +26,8 @@ import { getUserPreferences } from "@/lib/preferences"
 import { loadAndDecodeRoutes, type DecodedRoute } from "@ilocate/backend/routes"
 import { getDirections, formatDistance, formatDuration, type DirectionsResult } from "@ilocate/backend/osrm"
 import type { DirectionsRoute } from "@/components/map-leaflet"
+import { NavigationOverlay } from "@/components/navigation-overlay"
+import { useTurnByTurn } from "@/hooks/use-turn-by-turn"
 
 const MapComponent = dynamic(() => import("@/components/map-leaflet"), {
   ssr: false,
@@ -141,6 +143,10 @@ function FullScreenMapPageContent() {
   const [pendingGoToLandmark, setPendingGoToLandmark] = useState<string | null>(null)
   const [isPinDropMode, setIsPinDropMode] = useState(false)
   const [pinnedCoords, setPinnedCoords] = useState<[number, number] | null>(null)
+  // Turn-by-turn navigation
+  const [isNavigating, setIsNavigating] = useState(false)
+  const [navFollowing, setNavFollowing] = useState(true)
+  const [navMuted, setNavMuted] = useState(false)
   // Phone layout: floating search card + bottom sheet over a full-screen map
   const isDesktop = useMediaQuery("(min-width: 1024px)")
   const [searchOpen, setSearchOpen] = useState(false)
@@ -517,8 +523,41 @@ function FullScreenMapPageContent() {
     setPendingGoToLandmark(null)
   }, [pendingGoToLandmark, locationLoading, userLocation])
 
+  // Off course during navigation: fetch a fresh route from where the traveler is now
+  const rerouteFrom = async (position: [number, number]) => {
+    if (!destinationCoords) return
+    try {
+      const result = await getDirections(
+        { lat: position[0], lng: position[1] },
+        { lat: destinationCoords[0], lng: destinationCoords[1] }
+      )
+      if (result.success && result.route) {
+        setDirectionsRoute(result.route)
+        setOriginCoords(position)
+      }
+    } catch {
+      // Keep guiding along the old route; the next off-route update will try again
+    }
+  }
+
+  const navigation = useTurnByTurn({
+    active: isNavigating,
+    route: directionsRoute,
+    muted: navMuted,
+    onReroute: rerouteFrom,
+  })
+
+  const startNavigation = () => {
+    if (!directionsRoute) return
+    setIsNavigating(true)
+    setNavFollowing(true)
+    setSearchOpen(false)
+    setIsPinDropMode(false)
+  }
+
   // Clear only the computed route data
   const clearDirections = () => {
+    setIsNavigating(false)
     setDirectionsRoute(null)
     setDirectionsError(null)
     setOriginCoords(null)
@@ -592,7 +631,7 @@ function FullScreenMapPageContent() {
     const observer = new ResizeObserver(() => setSheetHeight(sheet.offsetHeight))
     observer.observe(sheet)
     return () => observer.disconnect()
-  }, [isDesktop])
+  }, [isDesktop, isNavigating])
 
   const mapRoutes = useMemo(
     () =>
@@ -1036,6 +1075,9 @@ function FullScreenMapPageContent() {
               <X /> End
             </Button>
           </div>
+          <Button size="lg" onClick={startNavigation} className="w-full rounded-full text-base">
+            <Navigation /> Start
+          </Button>
           {directionsRoute.steps.length > 0 && (
             <ol className="flex flex-col border-t border-border pt-3">
               {directionsRoute.steps.map((step, i) => (
@@ -1094,8 +1136,28 @@ function FullScreenMapPageContent() {
       originMarker={originCoords}
       destinationMarker={destinationCoords}
       pinDropMode={isPinDropMode}
+      navigating={isNavigating}
+      navigationPosition={navigation.position}
+      followNavigation={navFollowing}
       onPinDropped={handlePinDropped}
       onRouteSelect={handleRouteMapSelect}
+      onUserPan={() => setNavFollowing(false)}
+    />
+  )
+
+  const navigationOverlay = isNavigating && directionsRoute && (
+    <NavigationOverlay
+      route={directionsRoute}
+      progress={navigation.progress}
+      status={navigation.status}
+      error={navigation.error}
+      destinationLabel={to || "Your destination"}
+      muted={navMuted}
+      following={navFollowing}
+      onToggleMute={() => setNavMuted((prev) => !prev)}
+      onRecenter={() => setNavFollowing(true)}
+      onExit={() => setIsNavigating(false)}
+      onFinish={handleExitRoute}
     />
   )
 
@@ -1103,92 +1165,94 @@ function FullScreenMapPageContent() {
     return (
       <div className="relative h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] w-full overflow-hidden bg-muted">
         <div
-          className="map-mobile-chrome absolute inset-0"
+          className={cn("map-mobile-chrome absolute inset-0", isNavigating && "map-navigating")}
           style={{ ["--map-bottom-offset" as string]: `${sheetHeight}px` }}
         >
           {mapElement}
         </div>
 
-        {/* Floating search */}
-        <div className="absolute inset-x-0 top-0 z-10 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
-          {isPinDropMode ? (
-            pinBanner
-          ) : searchOpen ? (
-            <div className="rounded-2xl bg-background p-3 shadow-xl">
-              <div className="mb-1 flex items-center justify-between">
-                <h1 className="text-sm font-semibold text-foreground">Plan a trip</h1>
-                <Button size="icon-sm" variant="ghost" onClick={() => setSearchOpen(false)} aria-label="Close search">
-                  <X />
-                </Button>
-              </div>
-              {searchForm}
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="flex h-12 w-full items-center gap-3 rounded-full bg-background px-4 text-left shadow-lg"
-            >
-              <Search className="h-5 w-5 shrink-0 text-primary" />
-              <span className={cn("truncate text-base", to ? "text-foreground" : "text-muted-foreground")}>
-                {to || "Where to?"}
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Bottom sheet */}
-        <section
-          ref={sheetRef}
-          aria-label="Routes and places"
-          className={cn(
-            "absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-3xl border-t border-border/60 bg-background shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-[height] duration-300 ease-out",
-            // Keep the drawn route visible above turn-by-turn steps
-            sheetMode === "directions" ? "max-h-[45%]" : "max-h-[70%]",
-          )}
-          style={{ height: sheetMode === "browse" ? (sheetExpanded ? "70%" : "11rem") : undefined }}
-        >
-          {sheetMode === "browse" ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setSheetExpanded((prev) => !prev)}
-                aria-expanded={sheetExpanded}
-                aria-label={sheetExpanded ? "Collapse panel" : "Expand panel"}
-                className="flex h-7 w-full shrink-0 items-center justify-center"
-              >
-                <span className="h-1.5 w-10 rounded-full bg-border" />
-              </button>
-              <div className="shrink-0 px-4 pb-3">
-                <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
-                  {(
-                    [
-                      { id: "routes", label: `Jeepney routes${routes.length ? ` (${routes.length})` : ""}`, icon: Bus },
-                      { id: "places", label: "Places", icon: MapPin },
-                    ] as const
-                  ).map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={sheetTab === tab.id}
-                      onClick={() => {
-                        setSheetTab(tab.id)
-                        setSheetExpanded(true)
-                      }}
-                      className={cn(
-                        "flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors",
-                        sheetTab === tab.id ? "bg-background text-primary shadow-sm" : "text-muted-foreground",
-                      )}
-                    >
-                      <tab.icon className="h-4 w-4" /> {tab.label}
-                    </button>
-                  ))}
+        {navigationOverlay || (
+          <>
+            {/* Floating search */}
+            <div className="absolute inset-x-0 top-0 z-10 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)]">
+              {isPinDropMode ? (
+                pinBanner
+              ) : searchOpen ? (
+                <div className="rounded-2xl bg-background p-3 shadow-xl">
+                  <div className="mb-1 flex items-center justify-between">
+                    <h1 className="text-sm font-semibold text-foreground">Plan a trip</h1>
+                    <Button size="icon-sm" variant="ghost" onClick={() => setSearchOpen(false)} aria-label="Close search">
+                      <X />
+                    </Button>
+                  </div>
+                  {searchForm}
                 </div>
-              </div>
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
-                {sheetTab === "routes" ? routeList : landmarkList}
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="flex h-12 w-full items-center gap-3 rounded-full bg-background px-4 text-left shadow-lg"
+                >
+                  <Search className="h-5 w-5 shrink-0 text-primary" />
+                  <span className={cn("truncate text-base", to ? "text-foreground" : "text-muted-foreground")}>
+                    {to || "Where to?"}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Bottom sheet */}
+            <section
+              ref={sheetRef}
+              aria-label="Routes and places"
+              className={cn(
+                "absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-3xl border-t border-border/60 bg-background shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-[height] duration-300 ease-out",
+                // Keep the drawn route visible above turn-by-turn steps
+                sheetMode === "directions" ? "max-h-[45%]" : "max-h-[70%]",
+              )}
+              style={{ height: sheetMode === "browse" ? (sheetExpanded ? "70%" : "11rem") : undefined }}
+            >
+              {sheetMode === "browse" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setSheetExpanded((prev) => !prev)}
+                    aria-expanded={sheetExpanded}
+                    aria-label={sheetExpanded ? "Collapse panel" : "Expand panel"}
+                    className="flex h-7 w-full shrink-0 items-center justify-center"
+                  >
+                    <span className="h-1.5 w-10 rounded-full bg-border" />
+                  </button>
+                  <div className="shrink-0 px-4 pb-3">
+                    <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
+                      {(
+                        [
+                          { id: "routes", label: `Jeepney routes${routes.length ? ` (${routes.length})` : ""}`, icon: Bus },
+                          { id: "places", label: "Places", icon: MapPin },
+                        ] as const
+                      ).map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={sheetTab === tab.id}
+                          onClick={() => {
+                            setSheetTab(tab.id)
+                            setSheetExpanded(true)
+                          }}
+                          className={cn(
+                            "flex min-h-10 items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-colors",
+                            sheetTab === tab.id ? "bg-background text-primary shadow-sm" : "text-muted-foreground",
+                          )}
+                        >
+                          <tab.icon className="h-4 w-4" /> {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+                    {sheetTab === "routes" ? routeList : landmarkList}
+                  </div>
             </>
           ) : (
             <div className="min-h-0 overflow-y-auto overscroll-contain p-4 pt-5">
@@ -1196,13 +1260,15 @@ function FullScreenMapPageContent() {
             </div>
           )}
         </section>
+          </>
+        )}
       </div>
     )
   }
 
   return (
     <div className="flex h-[calc(100dvh-4rem)]">
-      {showMapSidebar && (
+      {showMapSidebar && !isNavigating && (
         <aside className="flex w-[380px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-border bg-background p-4">
           <div>
             <h1 className="text-lg font-bold text-foreground">Interactive Map</h1>
@@ -1249,49 +1315,53 @@ function FullScreenMapPageContent() {
         </aside>
       )}
 
-      <div className="relative min-w-0 flex-1 bg-muted">
+      <div className={cn("relative min-w-0 flex-1 bg-muted", isNavigating && "map-navigating")}>
         {mapElement}
 
-        {isPinDropMode && (
-          <div className="absolute left-1/2 top-4 z-10 w-[min(92%,560px)] -translate-x-1/2">{pinBanner}</div>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setShowMapSidebar((prev) => !prev)}
-          aria-label={showMapSidebar ? "Collapse routes panel" : "Expand routes panel"}
-          className="absolute left-0 top-1/2 z-10 flex h-11 w-8 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
-        >
-          {showMapSidebar ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowLandmarksPanel((prev) => !prev)}
-          aria-label={showLandmarksPanel ? "Collapse landmarks panel" : "Expand landmarks panel"}
-          className="absolute right-0 top-1/2 z-10 flex h-11 w-8 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
-        >
-          {showLandmarksPanel ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
-
-        {directionsVisible && (
-          <div className="absolute bottom-4 right-12 z-10 max-h-[55%] w-[min(90%,360px)] overflow-y-auto rounded-2xl bg-background/95 p-4 shadow-xl backdrop-blur-sm">
-            {directionsPanel}
-          </div>
-        )}
-
-        {selectedLandmark && (
-          <div
-            className={cn(
-              "absolute left-12 z-10 w-[min(90%,360px)] rounded-2xl bg-background/95 p-4 shadow-xl backdrop-blur-sm",
-              directionsVisible ? "top-4" : "bottom-4",
+        {navigationOverlay || (
+          <>
+            {isPinDropMode && (
+              <div className="absolute left-1/2 top-4 z-10 w-[min(92%,560px)] -translate-x-1/2">{pinBanner}</div>
             )}
-          >
-            {landmarkCard}
-          </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMapSidebar((prev) => !prev)}
+              aria-label={showMapSidebar ? "Collapse routes panel" : "Expand routes panel"}
+              className="absolute left-0 top-1/2 z-10 flex h-11 w-8 -translate-y-1/2 items-center justify-center rounded-r-lg border border-l-0 border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              {showMapSidebar ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLandmarksPanel((prev) => !prev)}
+              aria-label={showLandmarksPanel ? "Collapse landmarks panel" : "Expand landmarks panel"}
+              className="absolute right-0 top-1/2 z-10 flex h-11 w-8 -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-border bg-background text-muted-foreground shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              {showLandmarksPanel ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            </button>
+
+            {directionsVisible && (
+              <div className="absolute bottom-4 right-16 z-10 max-h-[55%] w-[min(90%,360px)] overflow-y-auto rounded-2xl bg-background/95 p-4 shadow-xl backdrop-blur-sm">
+                {directionsPanel}
+              </div>
+            )}
+
+            {selectedLandmark && (
+              <div
+                className={cn(
+                  "absolute left-12 z-10 w-[min(90%,360px)] rounded-2xl bg-background/95 p-4 shadow-xl backdrop-blur-sm",
+                  directionsVisible ? "top-4" : "bottom-4",
+                )}
+              >
+                {landmarkCard}
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {showLandmarksPanel && (
+      {showLandmarksPanel && !isNavigating && (
         <aside className="w-[340px] shrink-0 overflow-y-auto border-l border-border bg-background p-4">
           <h2 className="mb-3 text-sm font-semibold text-foreground">Landmarks</h2>
           {landmarkList}
