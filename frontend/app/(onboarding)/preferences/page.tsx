@@ -102,7 +102,7 @@ export default function WelcomePage() {
                   aria-pressed={isSelected}
                   onClick={() => toggleCategory(cat.id)}
                   className={cn(
-                    "flex min-h-14 items-center gap-2.5 rounded-2xl border-2 px-3 text-left text-sm font-medium transition-colors",
+                    "flex min-h-14 items-center gap-2.5 rounded-2xl border-2 odd:last:col-span-2 px-3 text-left text-sm font-medium transition-colors",
                     isSelected
                       ? "border-primary bg-primary/5 text-foreground"
                       : "border-border bg-background text-muted-foreground hover:border-primary/40",
