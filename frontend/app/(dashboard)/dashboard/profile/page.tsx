@@ -2,22 +2,23 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   BookmarkCheck,
   Check,
   ChevronRight,
-  Church,
   CircleHelp,
-  Coffee,
   Heart,
-  Landmark,
   Languages,
   Loader2,
-  ShoppingBag,
+  LogIn,
+  LogOut,
   Sparkles,
-  UtensilsCrossed,
-  Waves,
+  UserPlus,
+  UserRound,
 } from "lucide-react"
+import { useAuth } from "@/lib/auth"
+import { INTEREST_CATEGORIES } from "@/lib/interests"
 import { getUserPreferences, saveUserPreferences } from "@/lib/preferences"
 import {
   Dialog,
